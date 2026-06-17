@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.layababa:basebackend:0.1.0'
+    implementation 'com.github.layababa:basebackend:v0.1.0'
 }
 ```
 
