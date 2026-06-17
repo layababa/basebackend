@@ -53,6 +53,7 @@
 - 后台登录安全管理接口：`AdminSecurityController` 通过登录安全端口复用，事件聚合、告警、封禁和系统配置缓存仍由接入方实现
 - 后台管理员个人中心接口：`AdminSelfController` 通过个人中心端口复用，管理员认证、Redis 2FA 限流和审计仍由接入方实现
 - 后台管理员账号管理接口：`AdminManageController` 通过管理员管理端口复用，角色层级、仓库读写、审计和登录失败计数清理由接入方实现
+- 后台用户封禁接口：`AdminBanController` 通过封禁端口复用，通知、会话失效、Mongo 查询和审计仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
