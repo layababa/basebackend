@@ -71,6 +71,7 @@
 - 宣讲会实时信令：会议聊天、权限、分享、心跳 WebSocket handler 通过会议实时端口复用，会议状态、推送、消息落库和客户端兼容策略由接入方实现
 - 朋友圈 HTTP 接口：`MomentController` 通过朋友圈端口复用，动态存储、好友可见性、未读计数和通知策略由接入方实现
 - 群消息 V3 同步 HTTP 接口：`GroupV3SyncController` 通过群同步端口复用，同步查询、限流、超时、配置和指标由接入方实现
+- 通话中客户端心跳：`CallingHandler` 通过通话心跳端口复用，心跳存储和过期策略由接入方实现
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
