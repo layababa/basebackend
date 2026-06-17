@@ -71,3 +71,8 @@ data class OperatorBalanceDto(
     val balance: Long,
     val currency: String = "points"
 )
+
+data class CreditOperatorPointsRequest(
+    val amount: Long,
+    val reason: String? = null,
+)
