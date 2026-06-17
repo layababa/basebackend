@@ -69,6 +69,7 @@
 - 好友 HTTP 接口：`FriendController` 通过好友端口复用，好友关系写入、系统会话 fallback 和通知由接入方实现
 - 钱包开放接口：`WalletController` 通过钱包端口复用，链上地址、提现、支付密码、充值回调签名和通知由接入方实现
 - 宣讲会实时信令：会议聊天、权限、分享、心跳 WebSocket handler 通过会议实时端口复用，会议状态、推送、消息落库和客户端兼容策略由接入方实现
+- 朋友圈 HTTP 接口：`MomentController` 通过朋友圈端口复用，动态存储、好友可见性、未读计数和通知策略由接入方实现
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
