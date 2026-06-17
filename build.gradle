@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.layababateam'
-version = '0.2.0'
+version = '0.3.0'
 description = 'Shared backend SDK for Layababa Kotlin Spring services'
 
 java {
@@ -27,6 +27,7 @@ dependencies {
     compileOnly 'org.springframework.security:spring-security-config:7.0.2'
     compileOnly 'org.springframework.security:spring-security-crypto:7.0.2'
     compileOnly 'org.springframework.security:spring-security-web:7.0.2'
+    compileOnly 'org.springframework.data:spring-data-mongodb:5.0.2'
 }
 
 kotlin {
