@@ -29,7 +29,7 @@
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
-- 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、PushDa webhook、置顶消息迁移服务
+- 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
 - 通用 WebSocket handler：`GetMyCallStateHandler`、好友操作 handler 通过通话状态、好友操作与响应发送端口复用
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
@@ -41,7 +41,7 @@
 - 接入方缓存策略实现，例如 `UserCacheService`、`ConversationCacheService` 的 Redis/Mongo 细节。
 - 接入方 WebSocket 连接、广播投递与通话状态存储细节；SDK 仅保留 handler/controller 和端口契约。
 - WebSocket protobuf 编解码暂留接入方：`WsCodecService` 直接依赖接入方生成的 `WsEnvelope`、`ChatMessage`、`NewMessage` 等 proto 类型；迁移前需要先让 SDK 持有统一 proto schema 或提供解耦的 codec 端口。
-- Netty pipeline 与服务启动暂留接入方：`NettyChannelInitializer` 依赖项目本地 `NettyWebSocketHandler`、限流和路径路由，`NettyServer` 作为 `SmartLifecycle` 会自动绑定端口；迁移前需要先抽象 pipeline 组件并增加显式条件装配，避免 SDK 依赖后意外启动服务。
+- Netty pipeline 与服务启动暂留接入方：`NettyChannelInitializer` 依赖项目本地 `NettyWebSocketHandler` 和限流组件，`NettyServer` 作为 `SmartLifecycle` 会自动绑定端口；迁移前需要先抽象 pipeline 组件并增加显式条件装配，避免 SDK 依赖后意外启动服务。
 - 包含项目密钥的实现；SDK 只保留配置注入入口，不保存密钥值。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
 - Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
