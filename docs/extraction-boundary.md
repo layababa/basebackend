@@ -23,6 +23,7 @@
 - Bot 开放接口：`BotApiController` 通过 Bot API 端口复用，认证拦截器仍由接入方提供
 - 后台公开群管理接口：`AdminPublicGroupController` 通过公开群管理端口复用
 - 后台通话诊断接口：`AdminCallController` 通过通话诊断端口复用
+- 后台聊天管理接口：`AdminChatController` 通过聊天管理端口复用
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
