@@ -13,11 +13,13 @@
 - 深层核心域契约：用户、会话、消息、用户会话、设备会话、媒体对象、钱包流水、朋友圈等 model/repository
 - 通用 DTO 契约：认证、后台管理、消息、朋友圈、节点、群 V3 同步等请求/响应 DTO
 - 可选业务契约：宣讲大会 Broadcast 的 DTO/model/repository
+- 通用服务与接口：名片 controller/service、Excel 导出服务
 
 ## 暂不抽取内容
 
-- 依赖接入方认证上下文的 controller，例如直接读取 `HttpServletRequest.userId` 或依赖 `AuthTokenService` 的接口。
+- 依赖接入方认证上下文且各项目未统一的 controller，例如依赖 `AuthTokenService` 的接口。
 - 依赖接入方通知策略的 service，例如调用 `OfficialNotificationService` 的反馈/举报处理逻辑。
+- 依赖项目缓存实现且缓存层已分叉的 service，例如敏感词检测依赖的 `UserCacheService`、`ConversationCacheService`。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
 - Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
 - 客户端版本规则保留通用比较逻辑，但默认下载地址由接入方传入，SDK 不保存项目域名。
