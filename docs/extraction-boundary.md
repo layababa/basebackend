@@ -39,6 +39,8 @@
 - 接入方通知策略实现，例如具体 `OfficialNotificationService`、APNs 推送、系统账号会话创建等。
 - 接入方缓存策略实现，例如 `UserCacheService`、`ConversationCacheService` 的 Redis/Mongo 细节。
 - 接入方 WebSocket 连接、广播投递与通话状态存储细节；SDK 仅保留 handler/controller 和端口契约。
+- WebSocket protobuf 编解码暂留接入方：`WsCodecService` 直接依赖接入方生成的 `WsEnvelope`、`ChatMessage`、`NewMessage` 等 proto 类型；迁移前需要先让 SDK 持有统一 proto schema 或提供解耦的 codec 端口。
+- Netty pipeline 与服务启动暂留接入方：`NettyChannelInitializer` 依赖项目本地 `NettyWebSocketHandler`、限流和路径路由，`NettyServer` 作为 `SmartLifecycle` 会自动绑定端口；迁移前需要先抽象 pipeline 组件并增加显式条件装配，避免 SDK 依赖后意外启动服务。
 - 包含项目密钥的实现；SDK 只保留配置注入入口，不保存密钥值。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
 - Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
