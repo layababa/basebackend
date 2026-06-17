@@ -19,6 +19,7 @@
 - 接入方能力端口与通用 HTTP 接口：token 解析、TRTC UserSig、媒体密钥快照、反馈/举报 controller、TRTC controller、媒体密钥 controller
 - 后台通用接口：管理员权限切面、钱包流水查询与导出 controller
 - 后台媒体密钥广播接口：`AdminMediaKeyController` 通过媒体密钥快照与广播端口复用
+- 后台 Bot 管理接口：`AdminBotController` 通过 Bot 管理端口复用
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
