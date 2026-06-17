@@ -79,8 +79,12 @@ class AdminSystemController(
             return ResponseEntity.badRequest().body(ApiResponse.error<Any>(ErrorCode.INVALID_PARAM, "至少需要提供一个开关配置"))
         }
 
-        val updated = adminSystemPort.saveAssetSwitches(body)
-        val details = body.entries.joinToString(", ") { (key, value) ->
+        val requestedSwitches = linkedMapOf<String, Boolean>()
+        redPacketEnabled?.let { requestedSwitches["redPacketEnabled"] = it }
+        transferEnabled?.let { requestedSwitches["transferEnabled"] = it }
+
+        val updated = adminSystemPort.saveAssetSwitches(requestedSwitches)
+        val details = requestedSwitches.entries.joinToString(", ") { (key, value) ->
             val label = if (key == "redPacketEnabled") "红包" else "转账"
             val status = if (value) "启用" else "禁用"
             "$label: $status"
@@ -263,4 +267,9 @@ class AdminSystemController(
 
     private fun adminUsername(request: HttpServletRequest): String =
         request.getAttribute("adminUsername") as? String ?: ""
+
+    companion object {
+        const val KEY_RED_PACKET_ENABLED = "asset.redPacket.enabled"
+        const val KEY_TRANSFER_ENABLED = "asset.transfer.enabled"
+    }
 }
