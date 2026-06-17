@@ -35,6 +35,7 @@
 - 客户端启动配置接口：`ClientMonitoringConfigController` 通过客户端配置端口复用，监控配置来源、灰度策略和 token 解析仍由接入方实现
 - 历史媒体代理接口：`MediaProxyController` 通过媒体代理端口复用，token 校验、OSS key 解析和 endpoint 仍由接入方实现
 - 宣讲运营积分池接口：`OperatorBalanceController` 通过运营积分端口复用，运营身份校验和积分账户实现仍由接入方处理
+- 邀请与群二维码接口：`InviteController` 通过邀请端口复用，二维码加解密、群权限和入群申请仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
