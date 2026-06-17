@@ -25,6 +25,7 @@
 - Bot 开放接口：`BotApiController` 通过 Bot API 端口复用，认证拦截器仍由接入方提供
 - 后台公开群管理接口：`AdminPublicGroupController` 通过公开群管理端口复用
 - 后台通话诊断接口：`AdminCallController` 通过通话诊断端口复用
+- 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - 后台聊天管理接口：`AdminChatController` 通过聊天管理端口复用
 - 后台举报审核接口：`AdminModerationController` 通过审核管理端口复用
 - V3 会话 WebSocket handler：通过会话查询、channel 设备解析与响应发送端口复用
