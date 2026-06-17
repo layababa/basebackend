@@ -20,6 +20,7 @@
 - 后台通用接口：管理员权限切面、钱包流水查询与导出 controller
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
+- 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、PushDa webhook、置顶消息迁移服务
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
 
@@ -28,7 +29,7 @@
 - 依赖接入方认证上下文且各项目未统一的 controller，例如依赖 `AuthTokenService` 的接口。
 - 接入方通知策略实现，例如具体 `OfficialNotificationService`、APNs 推送、系统账号会话创建等。
 - 接入方缓存策略实现，例如 `UserCacheService`、`ConversationCacheService` 的 Redis/Mongo 细节。
-- 包含项目密钥或应由配置注入密钥的 service，例如当前硬编码密钥的 `MeetingTrtcService`。
+- 包含项目密钥的实现；SDK 只保留配置注入入口，不保存密钥值。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
 - Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
 - 客户端版本规则保留通用比较逻辑，但默认下载地址由接入方传入，SDK 不保存项目域名。
