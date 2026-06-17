@@ -27,6 +27,7 @@
 - 后台通话诊断接口：`AdminCallController` 通过通话诊断端口复用
 - 后台会议管理接口：`AdminMeetingController` 通过会议管理端口复用
 - 宣讲会会议开放接口：`MeetingController` 通过会议业务端口与客户端兼容端口复用
+- 宣讲大会主接口：`BroadcastController`、`AdminBroadcastController` 通过宣讲端口复用
 - 宣讲红包/福袋开放接口：`BroadcastRedPacketController`、`BroadcastLuckyBagController` 通过宣讲互动端口复用
 - 公开骰子图片资源接口：`PublicDiceAssetController` 通过内置渲染服务复用
 - 应用版本开放接口：`AppVersionController` 复用版本模型与仓库，CI 密钥仍由接入方配置
