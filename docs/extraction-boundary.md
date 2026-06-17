@@ -49,6 +49,7 @@
 - 后台红包对账接口：`AdminRedPacketController` 通过红包对账端口复用，Redis/Mongo 对账基线和落库修复仍由接入方实现
 - 后台 Dashboard 统计接口：`AdminDashboardController` 通过统计端口复用，Mongo 聚合、Redis 缓存和在线指标来源仍由接入方实现
 - 后台客户端管理接口：`AdminClientController` 通过客户端管理端口复用，在线快照调度、版本规则存储和强制下线动作仍由接入方实现
+- 后台管理员认证接口：`AdminAuthController` 通过认证端口复用，登录/2FA 限流、审计与令牌签发仍由接入方实现
 - 后台登录安全管理接口：`AdminSecurityController` 通过登录安全端口复用，事件聚合、告警、封禁和系统配置缓存仍由接入方实现
 - 后台管理员个人中心接口：`AdminSelfController` 通过个人中心端口复用，管理员认证、Redis 2FA 限流和审计仍由接入方实现
 - 后台管理员账号管理接口：`AdminManageController` 通过管理员管理端口复用，角色层级、仓库读写、审计和登录失败计数清理由接入方实现
