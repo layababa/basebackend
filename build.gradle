@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.layababateam'
-version = '0.1.0'
+version = '0.2.0'
 description = 'Shared backend SDK for Layababa Kotlin Spring services'
 
 java {
@@ -18,6 +18,15 @@ java {
 dependencies {
     api 'jakarta.validation:jakarta.validation-api:3.1.1'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    compileOnly 'com.fasterxml.jackson.core:jackson-annotations:2.20'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    compileOnly 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
+    compileOnly 'org.springframework:spring-context:7.0.2'
+    compileOnly 'org.springframework:spring-core:7.0.2'
+    compileOnly 'org.springframework:spring-web:7.0.2'
+    compileOnly 'org.springframework.security:spring-security-config:7.0.2'
+    compileOnly 'org.springframework.security:spring-security-crypto:7.0.2'
+    compileOnly 'org.springframework.security:spring-security-web:7.0.2'
 }
 
 kotlin {

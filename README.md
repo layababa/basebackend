@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.layababa:basebackend:v0.1.0'
+    implementation 'com.github.layababa:basebackend:v0.2.0'
 }
 ```
 
-This first SDK version contains shared response DTOs, error contracts, business exceptions, and low-coupling utility extensions used by the backend services.
+The SDK contains shared response DTOs, error contracts, business exceptions, utility extensions, and low-coupling Spring backend infrastructure used by the backend services.
