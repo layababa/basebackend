@@ -14,13 +14,14 @@
 - 通用 DTO 契约：认证、后台管理、消息、朋友圈、节点、群 V3 同步等请求/响应 DTO
 - 可选业务契约：宣讲大会 Broadcast 的 DTO/model/repository
 - 通用服务与接口：名片 controller/service、Excel 导出服务
+- 通知端口与公共处理流程：`OfficialNotificationSender`、反馈/举报 service
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、PushDa webhook、置顶消息迁移服务
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
 
 ## 暂不抽取内容
 
 - 依赖接入方认证上下文且各项目未统一的 controller，例如依赖 `AuthTokenService` 的接口。
-- 依赖接入方通知策略的 service，例如调用 `OfficialNotificationService` 的反馈/举报处理逻辑。
+- 接入方通知策略实现，例如具体 `OfficialNotificationService`、APNs 推送、系统账号会话创建等。
 - 依赖项目缓存实现且缓存层已分叉的 service，例如敏感词检测依赖的 `UserCacheService`、`ConversationCacheService`。
 - 包含项目密钥或应由配置注入密钥的 service，例如当前硬编码密钥的 `MeetingTrtcService`。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
