@@ -62,6 +62,7 @@
 - 后台举报审核接口：`AdminModerationController` 通过审核管理端口复用
 - V3 会话 WebSocket handler：通过会话查询、channel 设备解析与响应发送端口复用
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
+- 后台用户钱包接口：`AdminWalletController` 复用钱包调整 service、流水查询与 Excel 导出能力
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
