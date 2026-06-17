@@ -47,6 +47,7 @@
 - 后台远程调试日志接口：`AdminDebugLogController` 通过调试日志端口复用，设备校验、命令下发、OSS 签名和审计落库仍由接入方实现
 - 后台红包对账接口：`AdminRedPacketController` 通过红包对账端口复用，Redis/Mongo 对账基线和落库修复仍由接入方实现
 - 后台 Dashboard 统计接口：`AdminDashboardController` 通过统计端口复用，Mongo 聚合、Redis 缓存和在线指标来源仍由接入方实现
+- 后台客户端管理接口：`AdminClientController` 通过客户端管理端口复用，在线快照调度、版本规则存储和强制下线动作仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
