@@ -31,6 +31,7 @@
 - 公开骰子图片资源接口：`PublicDiceAssetController` 通过内置渲染服务复用
 - 应用版本开放接口：`AppVersionController` 复用版本模型与仓库，CI 密钥仍由接入方配置
 - 登录蜜罐接口：`LoginHoneypotController` 通过蜜罐记录端口复用，风控策略仍由接入方实现
+- 客户端推送接口：`PushController` 通过推送端口复用，设备会话与 PushDa 代理仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
