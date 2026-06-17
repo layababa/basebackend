@@ -42,4 +42,11 @@ interface MeetingRealtimePort {
         targetUserId: String?,
         operatorName: String
     )
+
+    fun handleLinkMic(
+        userId: String,
+        meetingId: String,
+        action: String,
+        data: Map<String, Any?>
+    )
 }
