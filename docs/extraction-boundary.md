@@ -64,6 +64,7 @@
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台用户钱包接口：`AdminWalletController` 复用钱包调整 service、流水查询与 Excel 导出能力
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
+- 会话 HTTP 接口：`ConversationController` 通过会话端口复用，消息读取、已读位点和隐藏历史逻辑由接入方实现
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
