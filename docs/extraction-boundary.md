@@ -25,6 +25,7 @@
 - 后台通话诊断接口：`AdminCallController` 通过通话诊断端口复用
 - 后台聊天管理接口：`AdminChatController` 通过聊天管理端口复用
 - 后台举报审核接口：`AdminModerationController` 通过审核管理端口复用
+- V3 会话 WebSocket handler：通过会话查询、channel 设备解析与响应发送端口复用
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
