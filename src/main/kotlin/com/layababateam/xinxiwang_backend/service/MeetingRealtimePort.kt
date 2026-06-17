@@ -23,4 +23,14 @@ interface MeetingRealtimePort {
     )
 
     fun updateHeartbeat(userId: String, meetingId: String, roomId: Int)
+
+    fun sendEmojiReaction(userId: String, meetingId: String, emoji: String)
+
+    fun handleRaiseHand(
+        userId: String,
+        meetingId: String,
+        action: String,
+        targetUserId: String?,
+        userName: String
+    )
 }
