@@ -22,7 +22,7 @@
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、PushDa webhook、置顶消息迁移服务
-- 通用 WebSocket handler：`GetMyCallStateHandler` 通过通话状态查询与响应发送端口复用
+- 通用 WebSocket handler：`GetMyCallStateHandler`、好友操作 handler 通过通话状态、好友操作与响应发送端口复用
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
 
 ## 暂不抽取内容
