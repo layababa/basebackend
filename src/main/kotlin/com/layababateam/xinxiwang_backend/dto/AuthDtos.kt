@@ -75,3 +75,22 @@ data class UserDto(
     val momentsVisibility: String = "all",
     val isBot: Boolean = false
 )
+
+data class UserUpdateRequest(
+    @field:Size(max = 30, message = "显示名称不能超过 30 个字符")
+    val displayName: String?,
+
+    @field:Size(max = 500, message = "头像链接不能超过 500 个字符")
+    val avatarUrl: String?,
+
+    val gender: Int?,
+
+    @field:Size(max = 100, message = "个人简介不能超过 100 个字符")
+    val bio: String?,
+
+    @field:Size(max = 500, message = "朋友圈背景链接不能超过 500 个字符")
+    val momentsBgUrl: String? = null,
+
+    @field:Pattern(regexp = "all|none|3days|7days|30days", message = "朋友圈可见范围无效")
+    val momentsVisibility: String? = null
+)
