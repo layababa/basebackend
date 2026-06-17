@@ -33,7 +33,7 @@
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
-- 通用 WebSocket handler：`GetMyCallStateHandler`、在线状态查询 handler、好友操作 handler 通过通话状态、在线状态、好友操作与响应发送端口复用
+- 通用 WebSocket handler：`GetMyCallStateHandler`、在线状态查询 handler、待接通通话检查 handler、好友操作 handler 通过通话状态、在线状态、待接通通话、好友操作与响应发送端口复用
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
 
 ## 暂不抽取内容
