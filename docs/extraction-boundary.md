@@ -37,6 +37,7 @@
 - 宣讲运营积分池接口：`OperatorBalanceController` 通过运营积分端口复用，运营身份校验和积分账户实现仍由接入方处理
 - 邀请与群二维码接口：`InviteController` 通过邀请端口复用，二维码加解密、群权限和入群申请仍由接入方实现
 - 后台音视频用量统计接口：`AdminAvUsageController` 通过音视频用量端口复用，TRTC 统计口径和会议段汇总仍由接入方实现
+- 后台消息扩散策略接口：`AdminMessageDeliveryPolicyController` 通过消息扩散策略端口复用，策略缓存、命中规则和投递执行仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
