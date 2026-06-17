@@ -26,6 +26,7 @@
 - 后台公开群管理接口：`AdminPublicGroupController` 通过公开群管理端口复用
 - 后台通话诊断接口：`AdminCallController` 通过通话诊断端口复用
 - 后台会议管理接口：`AdminMeetingController` 通过会议管理端口复用
+- 宣讲会会议开放接口：`MeetingController` 通过会议业务端口与客户端兼容端口复用
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
