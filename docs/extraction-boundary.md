@@ -16,6 +16,7 @@
 - 通用服务与接口：名片 controller/service、Excel 导出服务
 - 通知端口与公共处理流程：`OfficialNotificationSender`、反馈/举报 service
 - 查询端口与公共风控流程：`UserLookupPort`、`ConversationLookupPort`、敏感词命中检测 service
+- 接入方能力端口与通用 HTTP 接口：token 解析、TRTC UserSig、媒体密钥快照、反馈/举报 controller、TRTC controller、媒体密钥 controller
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、PushDa webhook、置顶消息迁移服务
 - 后台审计日志契约：`AdminAuditLog` 超集模型与 repository
 
