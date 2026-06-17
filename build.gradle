@@ -1,0 +1,40 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com.layababateam'
+version = '0.1.0'
+description = 'Shared backend SDK for Layababa Kotlin Spring services'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+dependencies {
+    api 'jakarta.validation:jakarta.validation-api:3.1.1'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+}
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll '-Xjsr305=strict', '-Xannotation-default-target=param-property'
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'basebackend'
+                description = project.description
+                url = 'https://github.com/layababa/basebackend'
+            }
+        }
+    }
+}
