@@ -8,13 +8,14 @@
 - 低耦合工具函数：金额安全转换、批量查询、正则转义
 - 低耦合 Spring 基础设施：Jackson 配置、安全过滤链、密码编码器、健康检查
 - 通用 Mongo 契约：名片、反馈、举报模型和 repository
-- 可选复用功能契约：会议 DTO、会议模型和会议 repository
+- 可选复用功能契约：会议、群接龙、钱包币种配置、前端错误上报、实名认证、用户标签等 DTO/model/repository
 
 ## 暂不抽取内容
 
 - 依赖接入方认证上下文的 controller，例如直接读取 `HttpServletRequest.userId` 或依赖 `AuthTokenService` 的接口。
 - 依赖接入方通知策略的 service，例如调用 `OfficialNotificationService` 的反馈/举报处理逻辑。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
+- Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
 - 项目私有配置、密钥、资源文件和环境脚本。
 
 ## 后续迁移原则
