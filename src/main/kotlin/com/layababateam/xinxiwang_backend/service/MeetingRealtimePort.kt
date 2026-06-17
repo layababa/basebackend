@@ -33,4 +33,13 @@ interface MeetingRealtimePort {
         targetUserId: String?,
         userName: String
     )
+
+    fun handleMuteControl(
+        userId: String,
+        meetingId: String,
+        action: String,
+        muteTypes: List<String>,
+        targetUserId: String?,
+        operatorName: String
+    )
 }
