@@ -18,6 +18,7 @@
 - 查询端口与公共风控流程：`UserLookupPort`、`ConversationLookupPort`、敏感词命中检测 service
 - 接入方能力端口与通用 HTTP 接口：token 解析、TRTC UserSig、媒体密钥快照、反馈/举报 controller、TRTC controller、媒体密钥 controller
 - 后台通用接口：管理员权限切面、钱包流水查询与导出 controller
+- 后台媒体密钥广播接口：`AdminMediaKeyController` 通过媒体密钥快照与广播端口复用
 - 钱包提现公共流程：提现后台 controller/service，以及锁、审计、支付通知、用户缓存失效端口
 - 后台钱包调整公共流程：管理员余额调整 service，复用锁、审计和支付通知端口
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
@@ -30,7 +31,7 @@
 - 依赖接入方认证上下文且各项目未统一的 controller，例如依赖 `AuthTokenService` 的接口。
 - 接入方通知策略实现，例如具体 `OfficialNotificationService`、APNs 推送、系统账号会话创建等。
 - 接入方缓存策略实现，例如 `UserCacheService`、`ConversationCacheService` 的 Redis/Mongo 细节。
-- 接入方 WebSocket 连接与通话状态存储细节；SDK 仅保留 handler 和端口契约。
+- 接入方 WebSocket 连接、广播投递与通话状态存储细节；SDK 仅保留 handler/controller 和端口契约。
 - 包含项目密钥的实现；SDK 只保留配置注入入口，不保存密钥值。
 - 各项目存在分叉的业务规则、错误码或 DTO，迁移前需要先做兼容设计。
 - Apple 登录 DTO 当前依赖接入方 `UserDto/AuthDtos`，而接入方仍保留同名认证 DTO；迁移前需要先统一认证 DTO 边界，避免同包同名类冲突。
