@@ -42,6 +42,7 @@
 - 后台监控配置接口：`AdminMonitoringController` 通过监控配置端口复用，配置持久化、缓存失效和后端 Sentry 重载仍由接入方实现
 - 后台媒体解密策略接口：`AdminMediaDecryptController` 通过媒体解密策略端口复用，策略命中规则、全局开关存储和缓存失效仍由接入方实现
 - 后台群消息 Signal Pull 配置接口：`AdminGroupMessageSignalController` 通过群消息 Signal 配置端口复用，系统配置读写和缓存失效仍由接入方实现
+- 后台反馈处理接口：`AdminFeedbackController` 通过反馈处理端口复用，用户通知、奖励积分和缓存失效仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
