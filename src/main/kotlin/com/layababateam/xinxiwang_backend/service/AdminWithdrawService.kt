@@ -107,22 +107,25 @@ class AdminWithdrawService(
             // TODO: 调用链上转账 API，将资金转至 record.toAddress
 
             // 6. 记录审计日志
-            auditLogPort.log(
+            auditLogPort.recordAudit(
                 adminId = adminId,
                 adminUsername = adminUsername,
                 action = "APPROVE_WITHDRAW",
                 targetType = "WITHDRAW",
                 targetId = recordId,
-                details = "通过提现申请，金额: ${record.amount}，地址: ${record.toAddress}，用户: ${record.userName}"
+                details = "通过提现申请，金额: ${record.amount}，地址: ${record.toAddress}，用户: ${record.userName}",
+                ipAddress = null
             )
 
             // 7. 通知用户
-            payNotificationPort.sendPayNotification(
+            payNotificationPort.sendPayNotificationCard(
                 userId = userId,
                 notifType = "withdraw_approved",
                 title = "提现审核通过",
                 amount = record.amount,
-                detail = "您的提现申请已通过审核\n提现金额: ${record.amount} 积分\n提现地址: ${record.toAddress}"
+                detail = "您的提现申请已通过审核\n提现金额: ${record.amount} 积分\n提现地址: ${record.toAddress}",
+                address = null,
+                txHash = null
             )
 
             log.info("Admin {} approved withdraw {} for user {} (amount: {})",
@@ -185,22 +188,25 @@ class AdminWithdrawService(
             ))
 
             // 5. 记录审计日志
-            auditLogPort.log(
+            auditLogPort.recordAudit(
                 adminId = adminId,
                 adminUsername = adminUsername,
                 action = "REJECT_WITHDRAW",
                 targetType = "WITHDRAW",
                 targetId = recordId,
-                details = "驳回提现申请，金额: ${record.amount}，原因: $reason，用户: ${record.userName}"
+                details = "驳回提现申请，金额: ${record.amount}，原因: $reason，用户: ${record.userName}",
+                ipAddress = null
             )
 
             // 6. 通知用户
-            payNotificationPort.sendPayNotification(
+            payNotificationPort.sendPayNotificationCard(
                 userId = userId,
                 notifType = "withdraw_rejected",
                 title = "提现审核驳回",
                 amount = record.amount,
-                detail = "您的提现申请已被驳回\n提现金额: ${record.amount} 积分\n驳回原因: $reason\n冻结金额已退还至您的账户"
+                detail = "您的提现申请已被驳回\n提现金额: ${record.amount} 积分\n驳回原因: $reason\n冻结金额已退还至您的账户",
+                address = null,
+                txHash = null
             )
 
             log.info("Admin {} rejected withdraw {} for user {} (amount: {}, reason: {})",

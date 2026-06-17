@@ -1,13 +1,13 @@
 package com.layababateam.xinxiwang_backend.service
 
 interface AuditLogPort {
-    fun log(
+    fun recordAudit(
         adminId: String,
         adminUsername: String,
         action: String,
         targetType: String,
-        targetId: String? = null,
-        details: String? = null,
-        ipAddress: String? = null
+        targetId: String?,
+        details: String?,
+        ipAddress: String?
     )
 }

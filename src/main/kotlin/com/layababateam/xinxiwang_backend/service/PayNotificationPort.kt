@@ -1,13 +1,13 @@
 package com.layababateam.xinxiwang_backend.service
 
 interface PayNotificationPort {
-    fun sendPayNotification(
+    fun sendPayNotificationCard(
         userId: String,
         notifType: String,
         title: String,
-        amount: String? = null,
+        amount: String?,
         detail: String,
-        address: String? = null,
-        txHash: String? = null
+        address: String?,
+        txHash: String?
     )
 }
