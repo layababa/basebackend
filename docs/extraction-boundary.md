@@ -40,6 +40,7 @@
 - 后台消息扩散策略接口：`AdminMessageDeliveryPolicyController` 通过消息扩散策略端口复用，策略缓存、命中规则和投递执行仍由接入方实现
 - 后台节点管理接口：`AdminNodeController` 通过节点管理端口复用，节点持久化和 CDN 配置发布仍由接入方实现
 - 后台监控配置接口：`AdminMonitoringController` 通过监控配置端口复用，配置持久化、缓存失效和后端 Sentry 重载仍由接入方实现
+- 后台媒体解密策略接口：`AdminMediaDecryptController` 通过媒体解密策略端口复用，策略命中规则、全局开关存储和缓存失效仍由接入方实现
 - 通话会话审计埋点：`CallSessionAudit` 统一 call-audit 结构化日志
 - ASR 开放接口：`AsrController` 通过语音识别端口复用，云厂商 SDK 与密钥配置仍由接入方实现
 - 贴纸收藏接口：`StickerController` 通过贴纸端口复用，文件存储与 OSS/CDN 细节仍由接入方实现
