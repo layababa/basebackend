@@ -27,6 +27,7 @@ enum class ErrorCode(val code: String, val defaultMessage: String) {
     // 会议 32xxx
     MEETING_PASSWORD_REQUIRED("32001", "该会议需要密码"),
     MEETING_PASSWORD_INCORRECT("32002", "会议密码错误"),
+    MEETING_ACTIVE_EXISTS("32003", "当前已有进行中的会议"),
 
     // 钱包 33xxx
     WALLET_INSUFFICIENT_BALANCE("33001", "余额不足"),
