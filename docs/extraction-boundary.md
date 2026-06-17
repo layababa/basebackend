@@ -67,6 +67,7 @@
 - 会话 HTTP 接口：`ConversationController` 通过会话端口复用，消息读取、已读位点和隐藏历史逻辑由接入方实现
 - 用户资料 HTTP 接口：`UserController` 通过用户资料端口复用，资料持久化、缓存失效和好友通知由接入方实现
 - 好友 HTTP 接口：`FriendController` 通过好友端口复用，好友关系写入、系统会话 fallback 和通知由接入方实现
+- 钱包开放接口：`WalletController` 通过钱包端口复用，链上地址、提现、支付密码、充值回调签名和通知由接入方实现
 - 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
