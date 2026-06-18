@@ -14,7 +14,7 @@ fun resolveDirectUploadDir(category: String): String =
     if (category in DIRECT_UPLOAD_DIRS) category else "files"
 
 fun normalizeDirectUploadCategory(category: String?): String =
-    when (category?.trim()?.lowercase()) {
+    when (StringValueRules.lowerNonBlank(category)) {
         "image", "images", "photo", "photos" -> "images"
         "video", "videos" -> "videos"
         "voice", "voices", "audio" -> "audio"
@@ -64,8 +64,7 @@ fun convertedPlainMediaOssKeyCandidates(category: String, mediaId: String, ext: 
     }
 
     return (listOf(primaryExt) + sniffedExts)
-        .filter { it.isNotBlank() }
-        .distinct()
+        .let(StringListRules::nonBlank)
         .mapNotNull { convertedPlainMediaOssKey(normalizedCategory, mediaId, it) }
 }
 
@@ -99,7 +98,7 @@ fun fileStem(fileName: String?): String? {
 }
 
 fun normalizedFileExtension(value: String?): String? {
-    val raw = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val raw = StringValueRules.nonBlank(value) ?: return null
     val extension = if ('.' in raw) raw.substringAfterLast('.') else raw
     return extension
         .trimStart('.')

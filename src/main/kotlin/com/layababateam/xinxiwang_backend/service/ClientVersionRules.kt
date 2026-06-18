@@ -12,12 +12,12 @@ object ClientVersionRules {
     val supportedPlatforms: Set<String> = setOf("ios", "android", "windows", "macos")
 
     fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String {
-        if (!customUrl.isNullOrBlank()) return customUrl
+        StringValueRules.nonBlank(customUrl)?.let { return it }
         return if (platform == IOS_PLATFORM) defaults.iosAppStoreUrl else defaults.defaultUrl
     }
 
     fun normalizePlatform(platform: String?): String? =
-        platform?.trim()?.lowercase()?.takeIf { it in supportedPlatforms }
+        StringValueRules.lowerNonBlank(platform)?.takeIf { it in supportedPlatforms }
 
     fun isSupportedPlatform(platform: String?): Boolean =
         normalizePlatform(platform) != null
@@ -26,8 +26,8 @@ object ClientVersionRules {
         buildNumber(v1).compareTo(buildNumber(v2))
 
     fun versionInRange(version: String, minVersion: String?, maxVersion: String?): Boolean {
-        val min = minVersion?.trim()?.takeIf { it.isNotEmpty() }
-        val max = maxVersion?.trim()?.takeIf { it.isNotEmpty() }
+        val min = StringValueRules.nonBlank(minVersion)
+        val max = StringValueRules.nonBlank(maxVersion)
         if (min != null && compareVersions(version, min) < 0) return false
         if (max != null && compareVersions(version, max) > 0) return false
         return true

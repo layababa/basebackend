@@ -30,12 +30,12 @@ class RequestMetadataService(
         .toSet()
 
     fun from(request: HttpServletRequest): RequestMetadata {
-        val remoteAddr = request.remoteAddr?.takeIf { it.isNotBlank() }
-        val forwardedFor = request.getHeader("X-Forwarded-For")?.takeIf { it.isNotBlank() }
-        val realIp = request.getHeader("X-Real-IP")?.takeIf { it.isNotBlank() }
-        val forwarded = request.getHeader("Forwarded")?.takeIf { it.isNotBlank() }
-        val userAgent = request.getHeader("User-Agent")?.takeIf { it.isNotBlank() }
-        val deviceId = request.getHeader("X-Admin-Device-Id")?.takeIf { it.isNotBlank() }?.take(128)
+        val remoteAddr = StringValueRules.nonBlank(request.remoteAddr)
+        val forwardedFor = StringValueRules.nonBlank(request.getHeader("X-Forwarded-For"))
+        val realIp = StringValueRules.nonBlank(request.getHeader("X-Real-IP"))
+        val forwarded = StringValueRules.nonBlank(request.getHeader("Forwarded"))
+        val userAgent = StringValueRules.nonBlank(request.getHeader("User-Agent"))
+        val deviceId = StringValueRules.nonBlank(request.getHeader("X-Admin-Device-Id"), max = 128)
         val hasProxyHeaders = !forwardedFor.isNullOrBlank() || !realIp.isNullOrBlank() || !forwarded.isNullOrBlank()
 
         val forwardedIps = RequestMetadataRules.forwardedIps(forwardedFor)

@@ -29,10 +29,12 @@ object ClientCompatibilityRules {
         )
 
     fun normalize(value: String?): String =
-        value?.trim()?.takeIf { it.isNotEmpty() && it != "null" } ?: UNKNOWN_VERSION
+        StringValueRules.nonBlank(value)
+            ?.takeIf { it != "null" }
+            ?: UNKNOWN_VERSION
 
     fun parseCompatVersion(value: String?): Int? =
-        value?.trim()?.toIntOrNull()?.coerceAtLeast(0)
+        StringValueRules.nonBlank(value)?.toIntOrNull()?.coerceAtLeast(0)
 
     fun backendCompatVersion(value: Int): Int =
         value.coerceAtLeast(UNKNOWN_BACKEND_COMPAT_VERSION)

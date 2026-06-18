@@ -31,7 +31,7 @@ object MediaDecryptPolicyRules {
     }
 
     fun chooseUserPolicy(userId: String?, policies: List<MediaDecryptPolicy>): MediaDecryptPolicy? {
-        val normalizedUserId = userId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val normalizedUserId = StringValueRules.nonBlank(userId) ?: return null
         return policies.asSequence()
             .filter { it.enabled }
             .filter { it.userId == normalizedUserId }
@@ -59,10 +59,10 @@ object MediaDecryptPolicyRules {
     }
 
     fun normalizePlatform(platform: String?): String? =
-        platform?.trim()?.lowercase()?.takeIf { it.isNotEmpty() && it != "unknown" }
+        StringValueRules.lowerNonBlank(platform)?.takeIf { it != "unknown" }
 
     fun normalizeClientVersion(clientVersion: String?): String? =
-        clientVersion?.trim()?.takeIf { it.isNotEmpty() && !it.equals("unknown", ignoreCase = true) }
+        StringValueRules.nonBlank(clientVersion)?.takeIf { !it.equals("unknown", ignoreCase = true) }
 
     fun hasPlatformVersionContext(platform: String?, clientVersion: String?): Boolean =
         normalizePlatform(platform) != null && normalizeClientVersion(clientVersion) != null

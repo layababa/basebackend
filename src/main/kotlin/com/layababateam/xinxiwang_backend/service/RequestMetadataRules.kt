@@ -19,6 +19,6 @@ object RequestMetadataRules {
         remoteAddr: String?,
     ): String? =
         firstForwardedIp(forwardedFor)
-            ?: realIp?.takeIf { it.isNotBlank() }
-            ?: remoteAddr?.takeIf { it.isNotBlank() }
+            ?: StringValueRules.nonBlank(realIp)
+            ?: StringValueRules.nonBlank(remoteAddr)
 }

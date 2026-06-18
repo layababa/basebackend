@@ -31,7 +31,7 @@ object MeetingScheduleRules {
     )
 
     fun normalizeRecurringRule(rule: String?, recurring: Boolean): String {
-        val value = rule?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+        val value = StringValueRules.lowerNonBlank(rule)
         if (value != null && value in recurringRules) return value
         // 旧客户端只会传 recurring=true/false；true 时给一个可展示的默认循环规则。
         return if (recurring) RECURRING_WEEKLY else RECURRING_NEVER

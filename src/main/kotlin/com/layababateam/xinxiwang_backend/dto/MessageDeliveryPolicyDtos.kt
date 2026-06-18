@@ -4,6 +4,7 @@ import com.layababateam.xinxiwang_backend.model.MessageDeliveryMode
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicy
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicyScope
 import com.layababateam.xinxiwang_backend.service.StringListRules
+import com.layababateam.xinxiwang_backend.service.StringValueRules
 
 data class MessageDeliveryPolicyRequest(
     val name: String? = null,
@@ -43,17 +44,17 @@ data class MessageDeliveryPolicyRequest(
     ): MessageDeliveryPolicy =
         MessageDeliveryPolicy(
             id = id,
-            name = name?.trim().orEmpty(),
+            name = StringValueRules.nonBlankOr(name, ""),
             scope = scope,
             mode = mode,
             enabled = enabled,
-            userId = userId?.trim()?.takeIf { it.isNotEmpty() },
+            userId = StringValueRules.nonBlank(userId),
             userIds = normalizedUserIds(),
-            platform = platform?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
-            minClientVersion = minClientVersion?.trim()?.takeIf { it.isNotEmpty() },
-            maxClientVersion = maxClientVersion?.trim()?.takeIf { it.isNotEmpty() },
+            platform = StringValueRules.lowerNonBlank(platform),
+            minClientVersion = StringValueRules.nonBlank(minClientVersion),
+            maxClientVersion = StringValueRules.nonBlank(maxClientVersion),
             priority = priority.coerceIn(-10_000, 10_000),
-            note = note?.trim()?.takeIf { it.isNotEmpty() },
+            note = StringValueRules.nonBlank(note),
             createdBy = createdBy,
             updatedBy = updatedBy,
             createdAt = createdAt,
