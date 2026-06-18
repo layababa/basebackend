@@ -2,7 +2,6 @@ package com.layababateam.xinxiwang_backend.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.Arrays
-import java.util.Base64
 import java.util.zip.Deflater
 
 /**
@@ -31,11 +30,7 @@ class TrtcUserSigGenerator(
             compressor.finish()
             val buf = ByteArray(4096)
             val len = compressor.deflate(buf)
-            Base64.getEncoder()
-                .encodeToString(Arrays.copyOfRange(buf, 0, len))
-                .replace("+", "*")
-                .replace("/", "-")
-                .replace("=", "_")
+            EncodingRules.trtcBase64(Arrays.copyOfRange(buf, 0, len))
         } finally {
             compressor.end()
         }
@@ -52,6 +47,6 @@ class TrtcUserSigGenerator(
             "TLS.sdkappid:$sdkAppId\n" +
             "TLS.time:$currTime\n" +
             "TLS.expire:$expire\n"
-        return Base64.getEncoder().encodeToString(HmacRules.hmacSha256(secretKey, content))
+        return EncodingRules.base64(HmacRules.hmacSha256(secretKey, content))
     }
 }

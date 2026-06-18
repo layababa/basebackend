@@ -3,7 +3,6 @@ package com.layababateam.xinxiwang_backend.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
-import java.util.Base64
 
 /**
  * HMAC-SHA256 signed proxy URL tokens.
@@ -24,7 +23,7 @@ class MediaProxyTokenService(
     fun sign(mediaId: String): String {
         val hmac = HmacRules.hmacSha256(secretBytes, mediaId.toByteArray(StandardCharsets.UTF_8))
         // base64url no-pad, truncated to TOKEN_LEN chars (~144 bits of entropy)
-        val full = Base64.getUrlEncoder().withoutPadding().encodeToString(hmac)
+        val full = EncodingRules.base64UrlNoPadding(hmac)
         return full.substring(0, minOf(TOKEN_LEN, full.length))
     }
 

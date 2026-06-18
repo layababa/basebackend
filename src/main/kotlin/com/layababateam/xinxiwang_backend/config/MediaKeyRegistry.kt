@@ -1,12 +1,12 @@
 package com.layababateam.xinxiwang_backend.config
 
+import com.layababateam.xinxiwang_backend.service.EncodingRules
 import com.layababateam.xinxiwang_backend.service.StringListRules
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.security.SecureRandom
-import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
@@ -51,7 +51,7 @@ class MediaKeyRegistry(
         }
 
         val raw = try {
-            Base64.getDecoder().decode(b64)
+            EncodingRules.decodeBase64(b64)
         } catch (e: IllegalArgumentException) {
             throw IllegalStateException(
                 "Master key '$keyId' is not valid base64 (and not the dev placeholder). " +
@@ -79,7 +79,7 @@ class MediaKeyRegistry(
             .map { (id, raw) ->
                 mapOf(
                     "keyId" to id,
-                    "keyB64" to Base64.getEncoder().encodeToString(raw),
+                    "keyB64" to EncodingRules.base64(raw),
                 )
             }
         return mapOf(

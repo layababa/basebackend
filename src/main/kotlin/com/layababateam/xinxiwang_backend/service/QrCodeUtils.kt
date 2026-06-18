@@ -2,7 +2,6 @@ package com.layababateam.xinxiwang_backend.service
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -35,7 +34,7 @@ class QrCodeUtils(
         val cipher = Cipher.getInstance(algorithm)
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
         val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encrypted)
+        return EncodingRules.base64UrlNoPadding(encrypted)
     }
 
     /**
@@ -45,7 +44,7 @@ class QrCodeUtils(
         return try {
             val cipher = Cipher.getInstance(algorithm)
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-            val decoded = Base64.getUrlDecoder().decode(encrypted)
+            val decoded = EncodingRules.decodeBase64Url(encrypted)
             val plainText = String(cipher.doFinal(decoded), Charsets.UTF_8)
             val parts = plainText.split("|")
             if (parts.size != 3) return null
@@ -70,14 +69,14 @@ class QrCodeUtils(
         val cipher = Cipher.getInstance(algorithm)
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
         val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encrypted)
+        return EncodingRules.base64UrlNoPadding(encrypted)
     }
 
     fun decryptMeetingInvite(encrypted: String): MeetingInvitePayload? {
         return try {
             val cipher = Cipher.getInstance(algorithm)
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-            val decoded = Base64.getUrlDecoder().decode(encrypted)
+            val decoded = EncodingRules.decodeBase64Url(encrypted)
             val plainText = String(cipher.doFinal(decoded), Charsets.UTF_8)
             val parts = plainText.split("|")
             if (parts.size != 4 || parts[0] != "meetingInvite") return null
