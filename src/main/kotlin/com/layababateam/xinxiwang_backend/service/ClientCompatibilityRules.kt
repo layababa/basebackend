@@ -34,6 +34,9 @@ object ClientCompatibilityRules {
     fun parseCompatVersion(value: String?): Int? =
         value?.trim()?.toIntOrNull()?.coerceAtLeast(0)
 
+    fun backendCompatVersion(value: Int): Int =
+        value.coerceAtLeast(UNKNOWN_BACKEND_COMPAT_VERSION)
+
     fun useLegacyFeature(
         backendCompatVersion: Int,
         minBackendCompatVersion: Int,

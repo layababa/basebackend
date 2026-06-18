@@ -27,6 +27,12 @@ data class GroupMessageSignalConfig(
  * 接入方负责提供配置和连接上下文，SDK 只维护纯规则，避免绑定业务仓储或会话实现。
  */
 object GroupMessageSignalRules {
+    fun configInt(value: Int?, default: Int, min: Int, max: Int = Int.MAX_VALUE): Int =
+        ConfigBoundaryRules.intValue(value, default, min, max)
+
+    fun configLong(value: Long?, default: Long, min: Long): Long =
+        ConfigBoundaryRules.longValue(value, default, min)
+
     fun classifyMessageType(contentType: Int, mentions: List<String> = emptyList()): String {
         if (mentions.isNotEmpty()) return "mention"
         if (contentType == LEGACY_SYSTEM_CONTENT_TYPE) return "system_critical"
