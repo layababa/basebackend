@@ -62,6 +62,9 @@ object BroadcastMeetingRules {
         return !allMuted || isAdmin(adminIds, userId)
     }
 
+    fun maxViewers(requestedMaxViewers: Int?, defaultMaxViewers: Int): Int =
+        (requestedMaxViewers ?: defaultMaxViewers).coerceIn(1, defaultMaxViewers)
+
     fun permissionsOf(
         userId: String,
         speakerId: String,

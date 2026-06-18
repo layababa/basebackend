@@ -92,6 +92,21 @@ object LoginSecurityRules {
         else -> "LOW"
     }
 
+    fun riskScore(score: Int): Int =
+        score.coerceIn(1, 100)
+
+    fun delayMillis(delayMillis: Long, maxMillis: Long = 5_000): Long =
+        delayMillis.coerceIn(0, maxMillis)
+
+    fun positiveThreshold(value: Long): Long =
+        value.coerceAtLeast(1)
+
+    fun autoBlockMinutes(minutes: Long): Long =
+        minutes.coerceIn(1, 24 * 60)
+
+    fun honeypotBlockHours(hours: Long): Long =
+        hours.coerceIn(1, 24 * 7)
+
     fun isSuspiciousUserAgent(userAgent: String?): Boolean {
         if (userAgent.isNullOrBlank()) return true
         val ua = userAgent.lowercase()
