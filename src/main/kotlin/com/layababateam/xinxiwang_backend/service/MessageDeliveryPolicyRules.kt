@@ -1,6 +1,5 @@
 package com.layababateam.xinxiwang_backend.service
 
-import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryMode
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicy
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicyScope
@@ -63,11 +62,7 @@ object MessageDeliveryPolicyRules {
     ): Boolean {
         val policyPlatform = policy.platform?.takeIf { it.isNotBlank() }
         if (policyPlatform != null && !policyPlatform.equals(platform, ignoreCase = true)) return false
-        val min = policy.minClientVersion?.takeIf { it.isNotBlank() }
-        if (min != null && ClientVersionRule.compareVersions(clientVersion, min) < 0) return false
-        val max = policy.maxClientVersion?.takeIf { it.isNotBlank() }
-        if (max != null && ClientVersionRule.compareVersions(clientVersion, max) > 0) return false
-        return true
+        return ClientVersionRules.versionInRange(clientVersion, policy.minClientVersion, policy.maxClientVersion)
     }
 
     fun scopeWeight(scope: MessageDeliveryPolicyScope): Int = when (scope) {

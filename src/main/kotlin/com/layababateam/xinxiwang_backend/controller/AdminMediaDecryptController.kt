@@ -7,11 +7,11 @@ import com.layababateam.xinxiwang_backend.dto.MediaDecryptConfigResponse
 import com.layababateam.xinxiwang_backend.dto.MediaDecryptDefaultRequest
 import com.layababateam.xinxiwang_backend.dto.MediaDecryptMasterRequest
 import com.layababateam.xinxiwang_backend.dto.MediaDecryptPolicyRequest
-import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 import com.layababateam.xinxiwang_backend.model.MediaDecryptPolicy
 import com.layababateam.xinxiwang_backend.model.MediaDecryptPolicyScope
 import com.layababateam.xinxiwang_backend.service.AdminMediaDecryptPort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
+import com.layababateam.xinxiwang_backend.service.ClientVersionRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -164,7 +164,7 @@ class AdminMediaDecryptController(
             MediaDecryptPolicyScope.PLATFORM_VERSION -> if (normalizedPlatform == null) return null
         }
         if (normalizedMinVersion != null && normalizedMaxVersion != null &&
-            ClientVersionRule.compareVersions(normalizedMinVersion, normalizedMaxVersion) > 0
+            ClientVersionRules.compareVersions(normalizedMinVersion, normalizedMaxVersion) > 0
         ) {
             return null
         }
@@ -194,7 +194,7 @@ class AdminMediaDecryptController(
             parsedScope == MediaDecryptPolicyScope.USER && userId.isNullOrBlank() -> "用户策略必须填写 userId"
             parsedScope == MediaDecryptPolicyScope.PLATFORM_VERSION && platform.isNullOrBlank() -> "平台版本策略必须填写 platform"
             !minClientVersion.isNullOrBlank() && !maxClientVersion.isNullOrBlank() &&
-                ClientVersionRule.compareVersions(minClientVersion.trim(), maxClientVersion.trim()) > 0 ->
+                ClientVersionRules.compareVersions(minClientVersion.trim(), maxClientVersion.trim()) > 0 ->
                 "minClientVersion 不能大于 maxClientVersion"
             else -> "策略参数不合法"
         }

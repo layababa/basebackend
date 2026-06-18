@@ -1,6 +1,5 @@
 package com.layababateam.xinxiwang_backend.service
 
-import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 import com.layababateam.xinxiwang_backend.model.MediaDecryptPolicy
 
 data class MediaDecryptRequestContext(
@@ -56,11 +55,7 @@ object MediaDecryptPolicyRules {
     }
 
     fun versionInRange(version: String, minVersion: String?, maxVersion: String?): Boolean {
-        val min = minVersion?.trim()?.takeIf { it.isNotEmpty() }
-        val max = maxVersion?.trim()?.takeIf { it.isNotEmpty() }
-        if (min != null && ClientVersionRule.compareVersions(version, min) < 0) return false
-        if (max != null && ClientVersionRule.compareVersions(version, max) > 0) return false
-        return true
+        return ClientVersionRules.versionInRange(version, minVersion, maxVersion)
     }
 
     fun normalizePlatform(platform: String?): String? =

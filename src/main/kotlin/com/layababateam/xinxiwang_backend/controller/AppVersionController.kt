@@ -2,8 +2,8 @@ package com.layababateam.xinxiwang_backend.controller
 
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.model.AppLatestVersion
-import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 import com.layababateam.xinxiwang_backend.repository.AppLatestVersionRepository
+import com.layababateam.xinxiwang_backend.service.ClientVersionRules
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -82,10 +82,10 @@ class AppVersionController(
             )
 
         val fullLatest = "${latest.latestVersion}+${latest.buildNumber}"
-        val hasUpdate = ClientVersionRule.compareVersions(version, fullLatest) < 0
+        val hasUpdate = ClientVersionRules.compareVersions(version, fullLatest) < 0
         val minForceVersion = latest.minForceVersion
         val forceUpdate = if (hasUpdate && latest.forceUpdate && minForceVersion != null) {
-            ClientVersionRule.compareVersions(version, minForceVersion) < 0
+            ClientVersionRules.compareVersions(version, minForceVersion) < 0
         } else {
             false
         }

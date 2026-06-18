@@ -1,5 +1,6 @@
 package com.layababateam.xinxiwang_backend.model
 
+import com.layababateam.xinxiwang_backend.service.ClientVersionRules
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
@@ -15,23 +16,11 @@ data class ClientVersionRule(
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     companion object {
-        fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String {
-            if (!customUrl.isNullOrBlank()) return customUrl
-            return if (platform == "ios") defaults.iosAppStoreUrl else defaults.defaultUrl
-        }
+        fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String =
+            ClientVersionRules.resolveUpdateUrl(platform, customUrl, defaults)
 
-        fun compareVersions(v1: String, v2: String): Int {
-            val (_, build1) = parseVersion(v1)
-            val (_, build2) = parseVersion(v2)
-            return build1 - build2
-        }
-
-        private fun parseVersion(version: String): Pair<List<Int>, Int> {
-            val parts = version.split("+", limit = 2)
-            val semver = parts[0].split(".").mapNotNull { it.toIntOrNull() }
-            val build = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            return semver to build
-        }
+        fun compareVersions(v1: String, v2: String): Int =
+            ClientVersionRules.compareVersions(v1, v2)
     }
 }
 
