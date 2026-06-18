@@ -12,6 +12,7 @@ import com.layababateam.xinxiwang_backend.model.MediaDecryptPolicyScope
 import com.layababateam.xinxiwang_backend.service.AdminMediaDecryptPort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
 import com.layababateam.xinxiwang_backend.service.ClientVersionRules
+import com.layababateam.xinxiwang_backend.service.StringValueRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -152,11 +153,11 @@ class AdminMediaDecryptController(
 
     private fun MediaDecryptPolicyRequest.toPolicy(existing: MediaDecryptPolicy? = null): MediaDecryptPolicy? {
         val parsedScope = parseScope(scope) ?: return null
-        val normalizedUserId = userId?.trim()?.takeIf { it.isNotEmpty() }
-        val normalizedPlatform = platform?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
-        val normalizedMinVersion = minClientVersion?.trim()?.takeIf { it.isNotEmpty() }
-        val normalizedMaxVersion = maxClientVersion?.trim()?.takeIf { it.isNotEmpty() }
-        val normalizedNote = note?.trim()?.takeIf { it.isNotEmpty() }
+        val normalizedUserId = StringValueRules.nonBlank(userId)
+        val normalizedPlatform = StringValueRules.lowerNonBlank(platform)
+        val normalizedMinVersion = StringValueRules.nonBlank(minClientVersion)
+        val normalizedMaxVersion = StringValueRules.nonBlank(maxClientVersion)
+        val normalizedNote = StringValueRules.nonBlank(note)
 
         if (backendDecryptEnabled == null) return null
         when (parsedScope) {
@@ -194,14 +195,19 @@ class AdminMediaDecryptController(
             parsedScope == MediaDecryptPolicyScope.USER && userId.isNullOrBlank() -> "用户策略必须填写 userId"
             parsedScope == MediaDecryptPolicyScope.PLATFORM_VERSION && platform.isNullOrBlank() -> "平台版本策略必须填写 platform"
             !minClientVersion.isNullOrBlank() && !maxClientVersion.isNullOrBlank() &&
-                ClientVersionRules.compareVersions(minClientVersion.trim(), maxClientVersion.trim()) > 0 ->
+                ClientVersionRules.compareVersions(
+                    StringValueRules.nonBlankOr(minClientVersion, ""),
+                    StringValueRules.nonBlankOr(maxClientVersion, ""),
+                ) > 0 ->
                 "minClientVersion 不能大于 maxClientVersion"
             else -> "策略参数不合法"
         }
     }
 
     private fun parseScope(scope: String?): MediaDecryptPolicyScope? =
-        scope?.trim()?.uppercase()?.let { runCatching { MediaDecryptPolicyScope.valueOf(it) }.getOrNull() }
+        StringValueRules.nonBlank(scope)?.uppercase()?.let {
+            runCatching { MediaDecryptPolicyScope.valueOf(it) }.getOrNull()
+        }
 
     private fun auditPolicyChange(request: HttpServletRequest, action: String, policy: MediaDecryptPolicy) {
         auditLogPort.recordAudit(

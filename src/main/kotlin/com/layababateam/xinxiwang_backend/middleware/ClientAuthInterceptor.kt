@@ -2,6 +2,7 @@ package com.layababateam.xinxiwang_backend.middleware
 
 import com.layababateam.xinxiwang_backend.service.AuthTokenResolver
 import com.layababateam.xinxiwang_backend.service.ClientAuthRefreshPolicy
+import com.layababateam.xinxiwang_backend.service.StringValueRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
@@ -47,10 +48,10 @@ class ClientAuthInterceptor(
         request.setAttribute(USER_ID_ATTR, userId)
         val token = if (authHeader!!.startsWith("Bearer ")) authHeader.substring(7) else authHeader
         request.setAttribute(AUTH_TOKEN_ATTR, token)
-        request.getHeader("X-Backend-Compat-Version")?.trim()?.takeIf { it.isNotEmpty() }?.let {
+        StringValueRules.nonBlank(request.getHeader("X-Backend-Compat-Version"))?.let {
             request.setAttribute(BACKEND_COMPAT_VERSION_ATTR, it)
         }
-        request.getHeader("X-Client-Platform")?.trim()?.takeIf { it.isNotEmpty() }?.let {
+        StringValueRules.nonBlank(request.getHeader("X-Client-Platform"))?.let {
             request.setAttribute(CLIENT_PLATFORM_ATTR, it)
         }
         return true

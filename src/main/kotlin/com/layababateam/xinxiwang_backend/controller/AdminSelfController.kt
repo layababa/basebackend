@@ -8,6 +8,7 @@ import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.service.AdminSelfPort
 import com.layababateam.xinxiwang_backend.service.AdminSelfRequestContext
 import com.layababateam.xinxiwang_backend.service.AdminSelfResult
+import com.layababateam.xinxiwang_backend.service.StringValueRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -95,6 +96,6 @@ class AdminSelfController(
             realIp = request.getHeader("X-Real-IP"),
             forwarded = request.getHeader("Forwarded"),
             userAgent = request.getHeader("User-Agent"),
-            deviceId = request.getHeader("X-Admin-Device-Id")?.takeIf { it.isNotBlank() }?.take(128),
+            deviceId = StringValueRules.nonBlank(request.getHeader("X-Admin-Device-Id"), max = 128),
         )
 }
