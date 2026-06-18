@@ -37,8 +37,10 @@ class AppVersionController(
             return ResponseEntity.status(403).body(ApiResponse.error("Invalid CI secret"))
         }
 
-        if (request.platform !in VALID_PLATFORMS) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("平台必须是: ${VALID_PLATFORMS.joinToString()}"))
+        if (!ClientVersionRules.isSupportedPlatform(request.platform)) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("平台必须是: ${ClientVersionRules.supportedPlatforms.joinToString()}")
+            )
         }
 
         val existing = appLatestVersionRepository.findByPlatform(request.platform)
@@ -106,7 +108,6 @@ class AppVersionController(
     }
 
     private companion object {
-        val VALID_PLATFORMS = setOf("ios", "android", "windows", "macos")
         const val CI_UPDATED_BY = "ci"
     }
 }

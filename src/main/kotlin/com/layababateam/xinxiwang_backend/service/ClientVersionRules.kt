@@ -9,10 +9,18 @@ import com.layababateam.xinxiwang_backend.model.ClientUpdateUrlDefaults
  * 平台白名单和具体强更策略。
  */
 object ClientVersionRules {
+    val supportedPlatforms: Set<String> = setOf("ios", "android", "windows", "macos")
+
     fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String {
         if (!customUrl.isNullOrBlank()) return customUrl
         return if (platform == IOS_PLATFORM) defaults.iosAppStoreUrl else defaults.defaultUrl
     }
+
+    fun normalizePlatform(platform: String?): String? =
+        platform?.trim()?.lowercase()?.takeIf { it in supportedPlatforms }
+
+    fun isSupportedPlatform(platform: String?): Boolean =
+        normalizePlatform(platform) != null
 
     fun compareVersions(v1: String, v2: String): Int =
         buildNumber(v1).compareTo(buildNumber(v2))
