@@ -6,6 +6,7 @@ import com.layababateam.xinxiwang_backend.dto.GroupMessageSignalAdminConfigReque
 import com.layababateam.xinxiwang_backend.dto.GroupMessageSignalAdminConfigResponse
 import com.layababateam.xinxiwang_backend.service.AdminGroupMessageSignalPort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
+import com.layababateam.xinxiwang_backend.service.GroupMessageSignalRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -52,9 +53,9 @@ class AdminGroupMessageSignalController(
         val configs = adminGroupMessageSignalPort.getConfigValues(CONFIG_KEYS)
         fun raw(key: String): String? = configs[key]
         fun int(key: String, default: Int, min: Int, max: Int = Int.MAX_VALUE): Int =
-            (raw(key)?.toIntOrNull() ?: default).coerceIn(min, max)
+            GroupMessageSignalRules.configInt(raw(key)?.toIntOrNull(), default, min, max)
         fun long(key: String, default: Long, min: Long): Long =
-            maxOf(raw(key)?.toLongOrNull() ?: default, min)
+            GroupMessageSignalRules.configLong(raw(key)?.toLongOrNull(), default, min)
 
         return GroupMessageSignalAdminConfigResponse(
             enabled = raw(KEY_ENABLED)?.toBooleanStrictOrNull() ?: false,
@@ -73,14 +74,14 @@ class AdminGroupMessageSignalController(
     private fun GroupMessageSignalAdminConfigRequest.normalized(): GroupMessageSignalAdminConfigResponse =
         GroupMessageSignalAdminConfigResponse(
             enabled = enabled ?: false,
-            groupMemberThreshold = (groupMemberThreshold ?: 500).coerceAtLeast(1),
-            onlineMemberThreshold = (onlineMemberThreshold ?: 100).coerceAtLeast(1),
-            minProtocolVersion = (minProtocolVersion ?: 3).coerceAtLeast(1),
-            syncDefaultLimit = (syncDefaultLimit ?: 100).coerceAtLeast(1),
-            syncMaxLimit = (syncMaxLimit ?: 500).coerceAtLeast(1),
-            rolloutPercent = (rolloutPercent ?: 0).coerceIn(0, 100),
+            groupMemberThreshold = GroupMessageSignalRules.configInt(groupMemberThreshold, 500, min = 1),
+            onlineMemberThreshold = GroupMessageSignalRules.configInt(onlineMemberThreshold, 100, min = 1),
+            minProtocolVersion = GroupMessageSignalRules.configInt(minProtocolVersion, 3, min = 1),
+            syncDefaultLimit = GroupMessageSignalRules.configInt(syncDefaultLimit, 100, min = 1),
+            syncMaxLimit = GroupMessageSignalRules.configInt(syncMaxLimit, 500, min = 1),
+            rolloutPercent = GroupMessageSignalRules.configInt(rolloutPercent, 0, min = 0, max = 100),
             localConnectionOnly = localConnectionOnly ?: true,
-            serverSignalCoalesceMs = (serverSignalCoalesceMs ?: 100).coerceAtLeast(0),
+            serverSignalCoalesceMs = GroupMessageSignalRules.configLong(serverSignalCoalesceMs, 100, min = 0),
             forceFullPushMessageTypes = normalizeMessageTypes(forceFullPushMessageTypes),
         )
 
@@ -99,13 +100,10 @@ class AdminGroupMessageSignalController(
         )
 
     private fun normalizeMessageTypes(raw: String?): String {
-        val types = raw
-            ?.split(',', '\n', ';', '，')
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.distinct()
-            .orEmpty()
-        return (types.ifEmpty { DEFAULT_FORCE_FULL_PUSH_MESSAGE_TYPES }).joinToString("\n")
+        return GroupMessageSignalRules.normalizeForceFullPushMessageTypes(
+            raw,
+            DEFAULT_FORCE_FULL_PUSH_MESSAGE_TYPES.toSet(),
+        ).joinToString("\n")
     }
 
     private fun adminId(request: HttpServletRequest): String = request.getAttribute("adminId") as String

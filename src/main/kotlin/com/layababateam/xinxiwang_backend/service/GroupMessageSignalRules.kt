@@ -33,6 +33,16 @@ object GroupMessageSignalRules {
     fun configLong(value: Long?, default: Long, min: Long): Long =
         ConfigBoundaryRules.longValue(value, default, min)
 
+    fun normalizeForceFullPushMessageTypes(raw: String?, default: Set<String>): Set<String> {
+        val types = raw
+            ?.split(',', '\n', ';', '，')
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.distinct()
+            .orEmpty()
+        return types.ifEmpty { default }.toSet()
+    }
+
     fun classifyMessageType(contentType: Int, mentions: List<String> = emptyList()): String {
         if (mentions.isNotEmpty()) return "mention"
         if (contentType == LEGACY_SYSTEM_CONTENT_TYPE) return "system_critical"
