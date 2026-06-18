@@ -22,6 +22,46 @@ object BroadcastMeetingRules {
         else -> ROLE_VIEWER
     }
 
+    fun isAdmin(adminIds: Collection<String>, userId: String): Boolean =
+        adminIds.contains(userId)
+
+    fun isSpeaker(speakerId: String, userId: String): Boolean =
+        speakerId == userId
+
+    fun isStaff(
+        userId: String,
+        speakerId: String,
+        adminIds: Collection<String>,
+    ): Boolean = isAdmin(adminIds, userId) || isSpeaker(speakerId, userId)
+
+    fun canKickTarget(
+        targetUserId: String,
+        speakerId: String,
+        adminIds: Collection<String>,
+    ): Boolean = !isStaff(targetUserId, speakerId, adminIds)
+
+    fun canTransferSpeakerTo(adminIds: Collection<String>, targetUserId: String): Boolean =
+        isAdmin(adminIds, targetUserId)
+
+    fun canRemoveLinkMic(
+        callerUserId: String,
+        targetUserId: String,
+        adminIds: Collection<String>,
+    ): Boolean = callerUserId == targetUserId || isAdmin(adminIds, callerUserId)
+
+    /**
+     * 全场禁言时管理员可发弹幕；单人禁言始终优先生效。
+     */
+    fun canSendBarrage(
+        userId: String,
+        adminIds: Collection<String>,
+        mutedUserIds: Collection<String>,
+        allMuted: Boolean,
+    ): Boolean {
+        if (mutedUserIds.contains(userId)) return false
+        return !allMuted || isAdmin(adminIds, userId)
+    }
+
     fun permissionsOf(
         userId: String,
         speakerId: String,
