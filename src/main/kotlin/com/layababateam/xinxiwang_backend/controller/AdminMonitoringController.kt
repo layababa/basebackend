@@ -7,6 +7,7 @@ import com.layababateam.xinxiwang_backend.dto.MonitoringConfigUpdateRequest
 import com.layababateam.xinxiwang_backend.dto.MonitoringConfigView
 import com.layababateam.xinxiwang_backend.service.AdminMonitoringPort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
+import com.layababateam.xinxiwang_backend.service.ConfigBoundaryRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -78,12 +79,22 @@ class AdminMonitoringController(
         if (dsn != null) put(KEY_GLITCHTIP_DSN, dsn)
         body.enabled?.let { put(KEY_GLITCHTIP_ENABLED, it.toString()) }
         body.environment?.let { put(KEY_GLITCHTIP_ENVIRONMENT, it.trim()) }
-        body.tracesSampleRate?.let { put(KEY_GLITCHTIP_TRACES_SAMPLE_RATE, it.coerceIn(0.0, 1.0).toString()) }
+        body.tracesSampleRate?.let {
+            put(
+                KEY_GLITCHTIP_TRACES_SAMPLE_RATE,
+                ConfigBoundaryRules.doubleValue(it, default = 0.0, min = 0.0, max = 1.0).toString(),
+            )
+        }
 
         if (serverDsn != null) put(KEY_GLITCHTIP_SERVER_DSN, serverDsn)
         body.serverEnabled?.let { put(KEY_GLITCHTIP_SERVER_ENABLED, it.toString()) }
         body.serverEnvironment?.let { put(KEY_GLITCHTIP_SERVER_ENVIRONMENT, it.trim()) }
-        body.serverTracesSampleRate?.let { put(KEY_GLITCHTIP_SERVER_TRACES_SAMPLE_RATE, it.coerceIn(0.0, 1.0).toString()) }
+        body.serverTracesSampleRate?.let {
+            put(
+                KEY_GLITCHTIP_SERVER_TRACES_SAMPLE_RATE,
+                ConfigBoundaryRules.doubleValue(it, default = 0.0, min = 0.0, max = 1.0).toString(),
+            )
+        }
     }
 
     private fun loadConfig(): MonitoringConfigView {

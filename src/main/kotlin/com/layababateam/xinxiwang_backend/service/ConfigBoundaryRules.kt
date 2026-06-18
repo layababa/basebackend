@@ -12,4 +12,7 @@ object ConfigBoundaryRules {
 
     fun longValue(value: Long?, default: Long, min: Long, max: Long = Long.MAX_VALUE): Long =
         (value ?: default).coerceIn(min, max)
+
+    fun doubleValue(value: Double?, default: Double, min: Double, max: Double = Double.MAX_VALUE): Double =
+        (value ?: default).coerceIn(min, max)
 }
