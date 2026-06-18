@@ -3,6 +3,7 @@ package com.layababateam.xinxiwang_backend.controller
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.service.AsrPort
+import com.layababateam.xinxiwang_backend.service.mediaExtensionFromUrl
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -42,9 +43,7 @@ class AsrController(
     }
 
     private fun resolveAudioFormat(url: String): String {
-        val extension = url.substringAfterLast('.', AsrPort.DEFAULT_FORMAT)
-            .lowercase()
-            .substringBefore('?')
+        val extension = mediaExtensionFromUrl(url) ?: AsrPort.DEFAULT_FORMAT
         return if (extension in SUPPORTED_FORMATS) extension else AsrPort.DEFAULT_FORMAT
     }
 

@@ -1,5 +1,7 @@
 package com.layababateam.xinxiwang_backend.controller
 
+import com.layababateam.xinxiwang_backend.service.cleanFileNameFromPath
+import com.layababateam.xinxiwang_backend.service.fileStem
 import com.layababateam.xinxiwang_backend.service.MediaProxyPort
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -46,11 +48,11 @@ class MediaProxyController(
         @RequestParam("variant", required = false) variant: String?,
         request: HttpServletRequest,
     ): ResponseEntity<Void> {
-        val cleanFileName = fileName.substringAfterLast('/').takeIf { it.isNotBlank() }
+        val cleanFileName = cleanFileNameFromPath(fileName)
             ?: return ResponseEntity.badRequest().build()
         val wantsThumbnail = compatRequestWantsThumbnail(variant, request)
         return redirectToOss(
-            mediaId = cleanFileName.substringBeforeLast('.', cleanFileName),
+            mediaId = fileStem(cleanFileName) ?: cleanFileName,
             thumb = wantsThumbnail,
             ossKey = mediaProxyPort.resolveCompatVideoOssKey(cleanFileName, wantsThumbnail),
         )

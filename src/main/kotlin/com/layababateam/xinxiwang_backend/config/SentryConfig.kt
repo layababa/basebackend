@@ -1,5 +1,6 @@
 package com.layababateam.xinxiwang_backend.config
 
+import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
 import io.sentry.protocol.User
 import io.sentry.spring.jakarta.SentryUserProvider
 import org.springframework.context.annotation.Bean
@@ -19,7 +20,11 @@ class SentryConfig {
                 val userId = request.getAttribute("userId") as? String
                 User().apply {
                     id = userId
-                    ipAddress = request.getHeader("X-Forwarded-For") ?: request.remoteAddr
+                    ipAddress = RequestMetadataRules.clientIp(
+                        forwardedFor = request.getHeader("X-Forwarded-For"),
+                        realIp = request.getHeader("X-Real-IP"),
+                        remoteAddr = request.remoteAddr,
+                    )
                     data = mapOf(
                         "userAgent" to (request.getHeader("User-Agent") ?: "unknown"),
                     )
