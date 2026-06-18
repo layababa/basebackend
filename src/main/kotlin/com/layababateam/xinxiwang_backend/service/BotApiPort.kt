@@ -6,6 +6,10 @@ object BotApiAuthAttributes {
     const val BOT_USER_ID_ATTR = "botUserId"
 }
 
+interface BotApiCredentialResolver {
+    fun resolveBotUserId(apiKey: String): String?
+}
+
 data class BotApiProfile(
     val id: String?,
     val username: String,
