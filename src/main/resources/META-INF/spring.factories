@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+  com.layababateam.xinxiwang_backend.config.NodeIdPostProcessor
