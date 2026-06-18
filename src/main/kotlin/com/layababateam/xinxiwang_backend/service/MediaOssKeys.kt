@@ -1,6 +1,8 @@
 package com.layababateam.xinxiwang_backend.service
 
+import com.layababateam.xinxiwang_backend.model.ContentType
 import com.layababateam.xinxiwang_backend.model.MediaObject
+import java.net.URI
 
 data class EncryptedMediaOssKey(
     val category: String,
@@ -71,6 +73,39 @@ fun convertedPlainThumbnailOssKey(category: String, mediaId: String): String? {
     val normalizedCategory = category.trim().trim('/')
     if (normalizedCategory.isBlank() || mediaId.isBlank()) return null
     return "thumbnails/$normalizedCategory/$mediaId.jpg"
+}
+
+fun mediaObjectPathFromUrl(value: String?): String? {
+    if (value.isNullOrBlank()) return null
+    val path = runCatching { URI(value).rawPath }.getOrNull()
+        ?: value.substringBefore('?').substringBefore('#')
+    return path.trimStart('/').takeIf { it.isNotBlank() }
+}
+
+fun mediaExtensionFromUrl(value: String?): String? {
+    val path = mediaObjectPathFromUrl(value) ?: return null
+    val fileName = path.substringAfterLast('/')
+    return fileName.substringAfterLast('.', missingDelimiterValue = "")
+        .lowercase()
+        .takeIf { it.length in 1..8 && it.all(Char::isLetterOrDigit) }
+}
+
+fun encryptedMediaOssKeyFromUrl(value: String): String? =
+    mediaObjectPathFromUrl(value)
+
+fun defaultPlainMediaExtension(contentType: Int): String? = when (contentType) {
+    ContentType.IMAGE.value -> "jpg"
+    ContentType.VIDEO.value -> "mp4"
+    ContentType.VOICE.value -> "m4a"
+    else -> null
+}
+
+fun defaultPlainMediaCategory(contentType: Int): String? = when (contentType) {
+    ContentType.IMAGE.value -> "images"
+    ContentType.VIDEO.value -> "videos"
+    ContentType.VOICE.value -> "audio"
+    ContentType.FILE.value -> "files"
+    else -> null
 }
 
 fun parseEncryptedMediaOssKey(ossKey: String?): EncryptedMediaOssKey? {
