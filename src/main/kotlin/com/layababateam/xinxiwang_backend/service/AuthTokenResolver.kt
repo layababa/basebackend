@@ -1,5 +1,5 @@
 package com.layababateam.xinxiwang_backend.service
 
 interface AuthTokenResolver {
-    fun resolveUserId(authHeader: String?): String?
+    fun resolveUserId(authHeader: String?, refreshTtl: Boolean = true): String?
 }
