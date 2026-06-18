@@ -3,16 +3,14 @@ package com.layababateam.xinxiwang_backend.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnProperty(prefix = "xinxiwang.meeting.trtc", name = ["secret-key"])
 class MeetingTrtcService(
     private val objectMapper: ObjectMapper,
     @Value("\${xinxiwang.meeting.trtc.sdk-app-id:20030819}")
     private val meetingSdkAppId: Long,
-    @Value("\${xinxiwang.meeting.trtc.secret-key}")
+    @Value("\${xinxiwang.meeting.trtc.secret-key:}")
     private val meetingSecretKey: String
 ) {
     private val log = LoggerFactory.getLogger(MeetingTrtcService::class.java)
