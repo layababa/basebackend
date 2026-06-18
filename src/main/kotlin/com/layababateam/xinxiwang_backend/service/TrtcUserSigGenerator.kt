@@ -1,12 +1,9 @@
 package com.layababateam.xinxiwang_backend.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.nio.charset.StandardCharsets
 import java.util.Arrays
 import java.util.Base64
 import java.util.zip.Deflater
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * 腾讯 TRTC UserSig v2 生成器。
@@ -55,9 +52,6 @@ class TrtcUserSigGenerator(
             "TLS.sdkappid:$sdkAppId\n" +
             "TLS.time:$currTime\n" +
             "TLS.expire:$expire\n"
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(secretKey.toByteArray(StandardCharsets.UTF_8), "HmacSHA256"))
-        val hash = mac.doFinal(content.toByteArray(StandardCharsets.UTF_8))
-        return Base64.getEncoder().encodeToString(hash)
+        return Base64.getEncoder().encodeToString(HmacRules.hmacSha256(secretKey, content))
     }
 }

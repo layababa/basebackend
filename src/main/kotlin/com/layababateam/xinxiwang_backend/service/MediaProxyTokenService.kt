@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * HMAC-SHA256 signed proxy URL tokens.
@@ -21,14 +19,10 @@ import javax.crypto.spec.SecretKeySpec
 class MediaProxyTokenService(
     @Value("\${xinxiwang.media.proxy.token-secret}") private val secret: String,
 ) {
-    private val keySpec by lazy {
-        SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), HMAC_ALG)
-    }
+    private val secretBytes by lazy { secret.toByteArray(StandardCharsets.UTF_8) }
 
     fun sign(mediaId: String): String {
-        val mac = Mac.getInstance(HMAC_ALG)
-        mac.init(keySpec)
-        val hmac = mac.doFinal(mediaId.toByteArray(StandardCharsets.UTF_8))
+        val hmac = HmacRules.hmacSha256(secretBytes, mediaId.toByteArray(StandardCharsets.UTF_8))
         // base64url no-pad, truncated to TOKEN_LEN chars (~144 bits of entropy)
         val full = Base64.getUrlEncoder().withoutPadding().encodeToString(hmac)
         return full.substring(0, minOf(TOKEN_LEN, full.length))
@@ -46,7 +40,6 @@ class MediaProxyTokenService(
     }
 
     companion object {
-        private const val HMAC_ALG = "HmacSHA256"
         private const val TOKEN_LEN = 24
     }
 }
