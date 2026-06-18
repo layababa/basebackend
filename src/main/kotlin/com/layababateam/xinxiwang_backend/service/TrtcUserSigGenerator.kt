@@ -1,8 +1,6 @@
 package com.layababateam.xinxiwang_backend.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import java.util.Arrays
-import java.util.zip.Deflater
 
 /**
  * 腾讯 TRTC UserSig v2 生成器。
@@ -23,17 +21,8 @@ class TrtcUserSigGenerator(
             "TLS.sig" to hmacSha256(userId, sdkAppId, secretKey, currTime, expire),
         )
 
-        val compressor = Deflater()
-        return try {
-            val jsonBytes = objectMapper.writeValueAsBytes(sigDoc)
-            compressor.setInput(jsonBytes)
-            compressor.finish()
-            val buf = ByteArray(4096)
-            val len = compressor.deflate(buf)
-            EncodingRules.trtcBase64(Arrays.copyOfRange(buf, 0, len))
-        } finally {
-            compressor.end()
-        }
+        val jsonBytes = objectMapper.writeValueAsBytes(sigDoc)
+        return EncodingRules.trtcBase64(CompressionRules.deflate(jsonBytes))
     }
 
     private fun hmacSha256(
