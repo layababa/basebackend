@@ -1,7 +1,6 @@
 package com.layababateam.xinxiwang_backend.service
 
 import java.net.InetAddress
-import java.security.MessageDigest
 
 data class LoginSecurityContext(
     val username: String,
@@ -135,9 +134,7 @@ object LoginSecurityRules {
     }
 
     fun usernameHash(username: String): String {
-        val bytes = MessageDigest.getInstance("SHA-256")
-            .digest(username.trim().lowercase().toByteArray())
-        return bytes.take(12).joinToString("") { "%02x".format(it) }
+        return HashRules.sha256HexPrefix(username.trim().lowercase(), bytes = 12)
     }
 
     private val BLOCK_TYPES = setOf("IP", "SUBNET", "DEVICE", "USERNAME")

@@ -4,7 +4,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
-import java.security.MessageDigest
 import java.time.Duration
 
 @Service
@@ -205,9 +204,7 @@ class MessageSyncGuardService(
         }
 
         private fun hash(vararg parts: String): String {
-            val digest = MessageDigest.getInstance("SHA-256")
-                .digest(parts.joinToString("\u001F").toByteArray(Charsets.UTF_8))
-            return digest.take(16).joinToString("") { "%02x".format(it) }
+            return HashRules.sha256HexPrefix(parts.joinToString("\u001F"), bytes = 16)
         }
     }
 }
