@@ -9,6 +9,7 @@ import com.layababateam.xinxiwang_backend.model.DebugLogReport
 import com.layababateam.xinxiwang_backend.service.AdminDebugLogContext
 import com.layababateam.xinxiwang_backend.service.AdminDebugLogPort
 import com.layababateam.xinxiwang_backend.service.AdminDebugLogRequest
+import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -90,8 +91,11 @@ class AdminDebugLogController(
     private fun context(request: HttpServletRequest): AdminDebugLogContext {
         return AdminDebugLogContext(
             adminId = request.getAttribute(ADMIN_ID_ATTR) as? String ?: "unknown",
-            ip = request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
-                ?: request.remoteAddr,
+            ip = RequestMetadataRules.clientIp(
+                forwardedFor = request.getHeader("X-Forwarded-For"),
+                realIp = null,
+                remoteAddr = request.remoteAddr,
+            ),
             userAgent = request.getHeader("User-Agent"),
         )
     }

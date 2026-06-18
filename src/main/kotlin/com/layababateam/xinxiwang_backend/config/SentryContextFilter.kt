@@ -2,6 +2,7 @@ package com.layababateam.xinxiwang_backend.config
 
 import com.layababateam.xinxiwang_backend.middleware.AdminAuthInterceptor
 import com.layababateam.xinxiwang_backend.middleware.ClientAuthInterceptor
+import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
@@ -90,8 +91,10 @@ class SentryContextFilter : OncePerRequestFilter() {
     }
 
     private fun resolveClientIp(request: HttpServletRequest): String {
-        return request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
-            ?: request.getHeader("X-Real-IP")
-            ?: request.remoteAddr
+        return RequestMetadataRules.clientIp(
+            forwardedFor = request.getHeader("X-Forwarded-For"),
+            realIp = request.getHeader("X-Real-IP"),
+            remoteAddr = request.remoteAddr,
+        ).orEmpty()
     }
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
+import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
@@ -83,9 +84,11 @@ class GlobalExceptionHandler {
     }
 
     private fun resolveClientIp(request: HttpServletRequest): String {
-        return request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
-            ?: request.getHeader("X-Real-IP")
-            ?: request.remoteAddr
+        return RequestMetadataRules.clientIp(
+            forwardedFor = request.getHeader("X-Forwarded-For"),
+            realIp = request.getHeader("X-Real-IP"),
+            remoteAddr = request.remoteAddr,
+        ).orEmpty()
     }
 
     private fun buildValidationMessage(prefix: String, errors: Map<String, String>): String {

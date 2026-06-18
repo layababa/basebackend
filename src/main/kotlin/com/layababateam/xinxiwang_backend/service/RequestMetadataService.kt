@@ -40,11 +40,7 @@ class RequestMetadataService(
         val deviceId = request.getHeader("X-Admin-Device-Id")?.takeIf { it.isNotBlank() }?.take(128)
         val hasProxyHeaders = !forwardedFor.isNullOrBlank() || !realIp.isNullOrBlank() || !forwarded.isNullOrBlank()
 
-        val forwardedIps = forwardedFor
-            ?.split(",")
-            ?.map { it.trim() }
-            ?.filter { it.isNotBlank() }
-            .orEmpty()
+        val forwardedIps = RequestMetadataRules.forwardedIps(forwardedFor)
         val remoteTrusted = remoteAddr?.let(::isTrustedProxyAddress) == true
         val remotePrivate = remoteAddr?.let(::isPrivateOrLocalAddress) == true
         val clientIp = when {
