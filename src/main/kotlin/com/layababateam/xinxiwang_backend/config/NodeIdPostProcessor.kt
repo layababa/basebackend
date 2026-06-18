@@ -1,10 +1,10 @@
 package com.layababateam.xinxiwang_backend.config
 
+import com.layababateam.xinxiwang_backend.service.IdRules
 import org.springframework.boot.EnvironmentPostProcessor
 import org.springframework.boot.SpringApplication
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MapPropertySource
-import java.util.UUID
 
 class NodeIdPostProcessor : EnvironmentPostProcessor {
 
@@ -33,7 +33,7 @@ class NodeIdPostProcessor : EnvironmentPostProcessor {
         if (!existing.isNullOrBlank()) return
 
         val nodeId = System.getenv("HOSTNAME")?.takeIf { it.isNotBlank() }
-            ?: "node-${UUID.randomUUID().toString().substring(0, 8)}"
+            ?: "node-${IdRules.shortUuid()}"
 
         environment.propertySources.addFirst(
             MapPropertySource("dynamicNodeId", mapOf("xinxiwang.node.id" to nodeId)),

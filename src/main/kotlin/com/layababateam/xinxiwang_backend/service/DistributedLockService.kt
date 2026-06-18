@@ -4,7 +4,6 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.stereotype.Service
 import java.time.Duration
-import java.util.UUID
 
 data class LockHandle(val key: String, val value: String)
 
@@ -32,7 +31,7 @@ class DistributedLockService(
 
     fun tryLock(key: String, timeout: Duration = Duration.ofSeconds(10)): LockHandle? {
         val lockKey = "$LOCK_PREFIX$key"
-        val lockValue = UUID.randomUUID().toString()
+        val lockValue = IdRules.uuid()
         val acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, lockValue, timeout)
         return if (acquired == true) LockHandle(lockKey, lockValue) else null
     }

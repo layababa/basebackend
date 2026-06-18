@@ -1,5 +1,6 @@
 package com.layababateam.xinxiwang_backend.config
 
+import com.layababateam.xinxiwang_backend.service.IdRules
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -8,7 +9,6 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import java.util.UUID
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -19,7 +19,7 @@ class RequestTraceFilter : OncePerRequestFilter() {
         filterChain: FilterChain,
     ) {
         val traceId = request.getHeader("X-Trace-Id")
-            ?: UUID.randomUUID().toString().take(8)
+            ?: IdRules.shortUuid()
         MDC.put("traceId", traceId)
         response.setHeader("X-Trace-Id", traceId)
         try {
