@@ -28,8 +28,8 @@ class MediaEndpointResolver(
 
     companion object {
         fun resolvePublicEndpoint(fallbackEndpoint: String, directEndpoint: String): String {
-            val fallback = fallbackEndpoint.trimEnd('/')
-            val direct = directEndpoint.trimEnd('/')
+            val fallback = UrlRules.stripTrailingSlash(fallbackEndpoint)
+            val direct = UrlRules.stripTrailingSlash(directEndpoint)
             return if (fallback.contains("xianyunimint", ignoreCase = true) && direct.isNotBlank()) {
                 direct
             } else {

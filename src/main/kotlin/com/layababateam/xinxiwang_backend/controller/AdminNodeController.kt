@@ -8,6 +8,7 @@ import com.layababateam.xinxiwang_backend.dto.UpdateNodeRequest
 import com.layababateam.xinxiwang_backend.model.ServerNode
 import com.layababateam.xinxiwang_backend.service.AdminNodePort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
+import com.layababateam.xinxiwang_backend.service.UrlRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -46,9 +47,9 @@ class AdminNodeController(
         val node = adminNodePort.saveNode(
             ServerNode(
                 name = body.name,
-                appServerUrl = body.appServerUrl.trimEnd('/'),
+                appServerUrl = UrlRules.stripTrailingSlash(body.appServerUrl),
                 websocketUrl = normalizeWsUrl(body.websocketUrl),
-                baseUrl = body.baseUrl.trimEnd('/'),
+                baseUrl = UrlRules.stripTrailingSlash(body.baseUrl),
                 region = body.region,
                 enabled = body.enabled,
                 sortOrder = body.sortOrder,
@@ -83,9 +84,9 @@ class AdminNodeController(
         val adminUsername = request.adminUsername()
         val updated = existing.copy(
             name = body.name ?: existing.name,
-            appServerUrl = body.appServerUrl?.trimEnd('/') ?: existing.appServerUrl,
+            appServerUrl = UrlRules.stripTrailingSlashOrNull(body.appServerUrl) ?: existing.appServerUrl,
             websocketUrl = body.websocketUrl?.let { normalizeWsUrl(it) } ?: existing.websocketUrl,
-            baseUrl = body.baseUrl?.trimEnd('/') ?: existing.baseUrl,
+            baseUrl = UrlRules.stripTrailingSlashOrNull(body.baseUrl) ?: existing.baseUrl,
             region = body.region ?: existing.region,
             enabled = body.enabled ?: existing.enabled,
             sortOrder = body.sortOrder ?: existing.sortOrder,
@@ -155,7 +156,7 @@ class AdminNodeController(
     }
 
     private fun normalizeWsUrl(url: String): String {
-        val trimmed = url.trimEnd('/')
+        val trimmed = UrlRules.stripTrailingSlash(url)
         return when {
             trimmed.startsWith("https://") -> trimmed.replaceFirst("https://", "wss://")
             trimmed.startsWith("http://") -> trimmed.replaceFirst("http://", "ws://")

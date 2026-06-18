@@ -3,6 +3,7 @@ package com.layababateam.xinxiwang_backend.controller
 import com.layababateam.xinxiwang_backend.service.cleanFileNameFromPath
 import com.layababateam.xinxiwang_backend.service.fileStem
 import com.layababateam.xinxiwang_backend.service.MediaProxyPort
+import com.layababateam.xinxiwang_backend.service.UrlRules
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.CacheControl
@@ -64,7 +65,7 @@ class MediaProxyController(
             return ResponseEntity.notFound().build()
         }
 
-        val endpoint = mediaProxyPort.currentOssPublicEndpoint().trimEnd('/')
+        val endpoint = UrlRules.stripTrailingSlash(mediaProxyPort.currentOssPublicEndpoint())
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create("$endpoint/$ossKey"))
             .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePrivate())
