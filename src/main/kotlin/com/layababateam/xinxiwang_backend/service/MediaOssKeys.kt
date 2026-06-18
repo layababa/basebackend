@@ -84,14 +84,28 @@ fun mediaObjectPathFromUrl(value: String?): String? {
 
 fun mediaExtensionFromUrl(value: String?): String? {
     val path = mediaObjectPathFromUrl(value) ?: return null
-    val fileName = path.substringAfterLast('/')
-    return fileName.substringAfterLast('.', missingDelimiterValue = "")
-        .lowercase()
-        .takeIf { it.length in 1..8 && it.all(Char::isLetterOrDigit) }
+    return normalizedFileExtension(cleanFileNameFromPath(path))
 }
 
 fun encryptedMediaOssKeyFromUrl(value: String): String? =
     mediaObjectPathFromUrl(value)
+
+fun cleanFileNameFromPath(value: String?): String? =
+    value?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+
+fun fileStem(fileName: String?): String? {
+    val cleanFileName = cleanFileNameFromPath(fileName) ?: return null
+    return cleanFileName.substringBeforeLast('.', cleanFileName).takeIf { it.isNotBlank() }
+}
+
+fun normalizedFileExtension(value: String?): String? {
+    val raw = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val extension = if ('.' in raw) raw.substringAfterLast('.') else raw
+    return extension
+        .trimStart('.')
+        .lowercase()
+        .takeIf { it.length in 1..8 && it.all(Char::isLetterOrDigit) }
+}
 
 fun defaultPlainMediaExtension(contentType: Int): String? = when (contentType) {
     ContentType.IMAGE.value -> "jpg"
