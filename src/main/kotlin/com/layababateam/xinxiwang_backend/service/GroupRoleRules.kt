@@ -17,4 +17,17 @@ object GroupRoleRules {
         ownerId: String?,
         userId: String,
     ): Boolean = isOwner(ownerId, userId) || adminIds.contains(userId)
+
+    /**
+     * 客户端约定的群角色等级：群主 2，管理员 1，普通成员 0。
+     */
+    fun roleLevel(
+        adminIds: Collection<String>,
+        ownerId: String?,
+        userId: String,
+    ): Int = when {
+        isOwner(ownerId, userId) -> 2
+        adminIds.contains(userId) -> 1
+        else -> 0
+    }
 }
