@@ -11,6 +11,23 @@ data class EncryptedMediaOssKey(
 fun resolveDirectUploadDir(category: String): String =
     if (category in DIRECT_UPLOAD_DIRS) category else "files"
 
+fun normalizeDirectUploadCategory(category: String?): String =
+    when (category?.trim()?.lowercase()) {
+        "image", "images", "photo", "photos" -> "images"
+        "video", "videos" -> "videos"
+        "voice", "voices", "audio" -> "audio"
+        "file", "files" -> "files"
+        "avatar", "avatars" -> "avatars"
+        "sticker", "stickers" -> "stickers"
+        "moment_image", "moment_images" -> "moment_images"
+        "moment_video", "moment_videos" -> "moment_videos"
+        "feedback_image", "feedback_images" -> "feedback_images"
+        else -> "files"
+    }
+
+fun directUploadSizeLimitBytes(category: String): Long =
+    DIRECT_UPLOAD_SIZE_LIMIT_BYTES[category] ?: DIRECT_UPLOAD_SIZE_LIMIT_BYTES.getValue("files")
+
 fun parseEncryptedMainCategory(ossKey: String, mediaId: String): String? {
     val parsed = parseEncryptedMediaOssKey(ossKey) ?: return null
     if (parsed.thumb || parsed.mediaId != mediaId || "/" in parsed.category) return null
@@ -102,6 +119,18 @@ private val DIRECT_UPLOAD_DIRS = setOf(
     "moment_images",
     "moment_videos",
     "feedback_images",
+)
+
+private val DIRECT_UPLOAD_SIZE_LIMIT_BYTES = mapOf(
+    "avatars" to 5L * 1024 * 1024,
+    "stickers" to 5L * 1024 * 1024,
+    "moment_images" to 15L * 1024 * 1024,
+    "moment_videos" to 500L * 1024 * 1024,
+    "feedback_images" to 10L * 1024 * 1024,
+    "images" to 15L * 1024 * 1024,
+    "videos" to 2L * 1024 * 1024 * 1024,
+    "files" to 2L * 1024 * 1024 * 1024,
+    "audio" to 50L * 1024 * 1024,
 )
 
 private fun normalizedPlainMediaExt(category: String, ext: String): String {
