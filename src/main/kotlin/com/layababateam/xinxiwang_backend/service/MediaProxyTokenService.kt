@@ -29,14 +29,7 @@ class MediaProxyTokenService(
     }
 
     fun verify(mediaId: String, token: String): Boolean {
-        val expected = sign(mediaId).toByteArray(StandardCharsets.US_ASCII)
-        val actual = token.toByteArray(StandardCharsets.US_ASCII)
-        if (expected.size != actual.size) return false
-        var diff = 0
-        for (i in expected.indices) {
-            diff = diff or (expected[i].toInt() xor actual[i].toInt())
-        }
-        return diff == 0
+        return SecurityCompareRules.constantTimeAsciiEquals(sign(mediaId), token)
     }
 
     companion object {
