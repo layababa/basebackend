@@ -3,7 +3,6 @@ package com.layababateam.xinxiwang_backend.service
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.math.BigInteger
 import java.net.InetAddress
 
 data class RequestMetadata(
@@ -85,62 +84,19 @@ class RequestMetadataService(
 
     private fun isTrustedProxyAddress(value: String): Boolean {
         if (configuredTrustedProxies.isEmpty()) return false
-        val host = value.substringBefore("%").trim().removePrefix("[").removeSuffix("]")
+        val host = NetworkAddressRules.cleanHost(value)
         return try {
             val address = InetAddress.getByName(host)
             configuredTrustedProxies.any { trusted ->
-                trusted == host || trustedAddressMatches(address, trusted) || cidrContains(address, trusted)
+                trusted == host ||
+                    NetworkAddressRules.addressMatches(address, trusted) ||
+                    NetworkAddressRules.cidrContains(address, trusted)
             }
         } catch (_: Exception) {
             false
         }
     }
 
-    private fun isPrivateOrLocalAddress(value: String): Boolean {
-        val host = value.substringBefore("%").trim().removePrefix("[").removeSuffix("]")
-        return try {
-            val address = InetAddress.getByName(host)
-            address.isAnyLocalAddress ||
-                    address.isLoopbackAddress ||
-                    address.isLinkLocalAddress ||
-                    address.isSiteLocalAddress ||
-                    isCarrierGradeNat(address)
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun isCarrierGradeNat(address: InetAddress): Boolean {
-        val bytes = address.address
-        return bytes.size == 4 &&
-                (bytes[0].toInt() and 0xff) == 100 &&
-                (bytes[1].toInt() and 0xc0) == 64
-    }
-
-    private fun trustedAddressMatches(address: InetAddress, trusted: String): Boolean {
-        if (trusted.contains("/")) return false
-        return try {
-            InetAddress.getByName(trusted).hostAddress == address.hostAddress
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun cidrContains(address: InetAddress, cidr: String): Boolean {
-        if (!cidr.contains("/")) return false
-        return try {
-            val network = cidr.substringBefore("/")
-            val prefix = cidr.substringAfter("/").toInt()
-            val networkAddress = InetAddress.getByName(network)
-            val addressBytes = address.address
-            val networkBytes = networkAddress.address
-            if (addressBytes.size != networkBytes.size) return false
-            val bitCount = addressBytes.size * 8
-            if (prefix !in 0..bitCount) return false
-            val shift = bitCount - prefix
-            BigInteger(1, addressBytes).shiftRight(shift) == BigInteger(1, networkBytes).shiftRight(shift)
-        } catch (_: Exception) {
-            false
-        }
-    }
+    private fun isPrivateOrLocalAddress(value: String): Boolean =
+        NetworkAddressRules.isPrivateOrLocal(value)
 }

@@ -1,7 +1,5 @@
 package com.layababateam.xinxiwang_backend.service
 
-import java.net.InetAddress
-
 data class LoginSecurityContext(
     val username: String,
     val deviceId: String?,
@@ -113,24 +111,7 @@ object LoginSecurityRules {
     }
 
     fun subnetOf(ip: String?): String? {
-        if (ip.isNullOrBlank()) return null
-        val clean = ip.substringBefore("%").trim().removePrefix("[").removeSuffix("]")
-        val ipv4 = IPV4_PATTERN.matchEntire(clean)
-        if (ipv4 != null) {
-            val parts = ipv4.groupValues.drop(1).mapNotNull { it.toIntOrNull() }
-            if (parts.size == 4 && parts.all { it in 0..255 }) {
-                return "${parts[0]}.${parts[1]}.${parts[2]}.0/24"
-            }
-        }
-        return try {
-            val bytes = InetAddress.getByName(clean).address
-            if (bytes.size != 16) return null
-            (0 until 8 step 2).joinToString(":") { i ->
-                (((bytes[i].toInt() and 0xff) shl 8) or (bytes[i + 1].toInt() and 0xff)).toString(16)
-            } + "::/64"
-        } catch (_: Exception) {
-            null
-        }
+        return NetworkAddressRules.subnetOf(ip)
     }
 
     fun usernameHash(username: String): String {
@@ -139,5 +120,4 @@ object LoginSecurityRules {
 
     private val BLOCK_TYPES = setOf("IP", "SUBNET", "DEVICE", "USERNAME")
     private val SUSPICIOUS_USER_AGENT_TOKENS = listOf("curl", "python", "httpclient", "okhttp/3", "go-http-client", "sqlmap", "nikto")
-    private val IPV4_PATTERN = Regex("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$")
 }
