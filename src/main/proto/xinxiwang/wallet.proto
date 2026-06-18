@@ -1,0 +1,116 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ─── Wallet Operations (client → server) ───
+
+message WalletOperation {
+  oneof operation {
+    WalletTransfer transfer = 1;
+    WalletSendRedPacket send_red_packet = 2;
+    WalletClaimRedPacket claim_red_packet = 3;
+    WalletGetRedPacketInfo get_red_packet_info = 4;
+  }
+}
+
+message WalletTransfer {
+  string receiver_id = 1;
+  string amount = 2;
+  string conversation_id = 3;
+  string payment_password = 4;
+}
+
+message WalletSendRedPacket {
+  string conversation_id = 1;
+  string total_amount = 2;
+  int32 count = 3;
+  int32 rp_type = 4;          // 0=normal, 3=targeted
+  string greeting = 5;
+  string target_user_id = 6;  // only when rp_type=3
+  string payment_password = 7;
+}
+
+message WalletClaimRedPacket {
+  string red_packet_id = 1;
+}
+
+message WalletGetRedPacketInfo {
+  string red_packet_id = 1;
+}
+
+// ─── Wallet Events (server → client) ───
+
+message WalletEvent {
+  oneof event {
+    WalletTransferResult transfer_result = 1;
+    WalletBalanceUpdated balance_updated = 2;
+    WalletRedPacketResult red_packet_result = 3;
+    WalletRedPacketClaimed red_packet_claimed = 4;
+    WalletRedPacketClaimNotification red_packet_claim_notification = 5;
+    WalletRedPacketInfo red_packet_info = 6;
+  }
+}
+
+message WalletTransferResult {
+  bool success = 1;
+  string message = 2;        // error message when !success
+  string amount = 3;
+  string new_balance = 4;
+  string receiver_name = 5;
+}
+
+message WalletBalanceUpdated {
+  string new_balance = 1;
+}
+
+message WalletRedPacketResult {
+  bool success = 1;
+  string message = 2;
+  string red_packet_id = 3;
+  string new_balance = 4;
+}
+
+message WalletRedPacketClaimed {
+  bool success = 1;
+  string message = 2;
+  string red_packet_id = 3;
+  string amount = 4;
+  string sender_id = 5;
+  string sender_name = 6;
+  int32 remaining_count = 7;
+  string new_balance = 8;
+}
+
+message WalletRedPacketClaimNotification {
+  string red_packet_id = 1;
+  string claimer_user_id = 2;
+  string amount = 3;
+  int32 remaining_count = 4;
+}
+
+message RedPacketClaimRecord {
+  string user_id = 1;
+  string user_name = 2;
+  string amount = 3;
+  int64 claimed_at = 4;
+}
+
+message WalletRedPacketInfo {
+  string id = 1;
+  string sender_id = 2;
+  string sender_name = 3;
+  int32 type = 4;
+  string total_amount = 5;
+  int32 count = 6;
+  int32 remaining_count = 7;
+  string greeting = 8;
+  repeated RedPacketClaimRecord claimed_by = 9;
+  bool has_claimed = 10;
+  string my_claimed_amount = 11;
+  string target_user_id = 12;
+  string target_user_name = 13;
+  bool is_target_user = 14;
+  bool expired = 15;
+  int64 created_at = 16;
+}

@@ -1,0 +1,84 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ========== Friend Operations (Client -> Server) ==========
+
+message FriendRequestSend {
+  string to_user_id = 1;
+  string message = 2;
+}
+
+message FriendAccept {
+  string request_id = 1;
+}
+
+message FriendReject {
+  string request_id = 1;
+}
+
+message FriendDelete {
+  string friend_id = 1;
+}
+
+message FriendBlock {
+  string friend_id = 1;
+}
+
+message FriendUnblock {
+  string friend_id = 1;
+}
+
+// ========== Friend Operation Responses (Server -> Client) ==========
+
+message FriendRequestSentResponse {
+  string request_id = 1;
+}
+
+message FriendAcceptSuccessResponse {
+  string friend_id = 1;
+  string conversation_id = 2;
+}
+
+// FriendRejectSuccess, FriendDeleteSuccess, FriendBlockSuccess,
+// FriendUnblockSuccess have no data fields — use empty messages.
+
+message FriendRejectSuccessResponse {}
+
+message FriendDeleteSuccessResponse {}
+
+message FriendBlockSuccessResponse {}
+
+message FriendUnblockSuccessResponse {}
+
+// ========== Friend Notifications (Server -> Client, via MQ) ==========
+
+message FriendRequestNotification {
+  string request_id = 1;
+  string from_user_id = 2;
+  string from_user_display_name = 3;
+  string from_user_username = 4;
+  string from_user_avatar_url = 5;
+  string message = 6;
+  int64 created_at = 7;
+}
+
+message FriendAcceptedNotification {
+  string request_id = 1;
+  string user_id = 2;
+  string user_name = 3;
+  string user_avatar = 4;
+  string conversation_id = 5;
+}
+
+// ========== Multi-Device Sync Notifications ==========
+
+message FriendDeletedNotification {
+  string friend_id = 1;
+  string conversation_id = 2;
+}
+
+message FriendBlockedNotification {
+  string friend_id = 1;
+}

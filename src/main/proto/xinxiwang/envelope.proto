@@ -1,0 +1,129 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+import "xinxiwang/common.proto";
+import "xinxiwang/auth.proto";
+import "xinxiwang/chat.proto";
+import "xinxiwang/conversation.proto";
+import "xinxiwang/sync.proto";
+import "xinxiwang/friend.proto";
+import "xinxiwang/group.proto";
+import "xinxiwang/wallet.proto";
+import "xinxiwang/call.proto";
+import "xinxiwang/session.proto";
+import "xinxiwang/presence.proto";
+import "xinxiwang/notification.proto";
+
+// WsEnvelope — WebSocket 统一信封消息
+// 所有 WebSocket 二进制帧的顶层包装。type 字段与 JSON 协议的 type 完全一致。
+message WsEnvelope {
+  string type = 1;           // 与 JSON 的 type 字段完全一致
+  string request_id = 2;     // 可选，请求-响应配对
+
+  oneof payload {
+    // ── 认证 (10-12) ──
+    AuthRequest         auth_request         = 10;
+    AuthSuccess         auth_success         = 11;
+    AuthFailed          auth_failed          = 12;
+
+    // ── 聊天消息 - 最高频 (20-23) ──
+    ChatMessage         chat_message         = 20;
+    NewMessage          new_message          = 21;
+    MessageSentAck      message_sent_ack     = 22;
+    MessageSendFailed   message_send_failed  = 23;
+
+    // ── 消息操作请求 (30-34) ──
+    MessageRecall       message_recall       = 30;
+    MessageDelete       message_delete       = 31;
+    MessageForward      message_forward      = 32;
+    MessagePin          message_pin          = 33;
+    MessageUnpin        message_unpin        = 34;
+
+    // ── 消息操作通知 (35-41) ──
+    MessageRecalled     message_recalled     = 35;
+    MessageDeleted      message_deleted      = 36;
+    MessageDeletedLocal message_deleted_local = 37;
+    MessageDeleteSuccess message_delete_success = 38;
+    MessagePinned       message_pinned       = 39;
+    MessageUnpinned     message_unpinned     = 40;
+
+    // ── 会话 (45-51) ──
+    ConversationListRequest       conversation_list_request       = 45;
+    ConversationListResponse      conversation_list_response      = 46;
+    ConversationUpdated           conversation_updated            = 47;
+    SetConversationPinRequest     set_conversation_pin            = 48;
+    SetConversationMuteRequest    set_conversation_mute           = 49;
+    SetConversationPeerRemarkRequest set_conversation_peer_remark = 50;
+
+    // ── 同步 (55-63) ──
+    SyncRequest            sync_request            = 55;
+    SyncResponse           sync_response           = 56;
+    GetHistory             get_history             = 57;
+    HistoryResponse        history_response        = 58;
+    BatchGetHistory        batch_get_history       = 59;
+    BatchHistoryResponse   batch_history_response  = 60;
+    UpdateReadPoint        update_read_point       = 61;
+    ReadPointUpdated       read_point_updated      = 62;
+    BatchUpdateReadPoints  batch_update_read_points = 63;
+    GroupReadUpdate        group_read_update       = 64;
+
+    // ── 好友操作 (70-75) ──
+    FriendRequestSend   friend_request_send  = 70;
+    FriendAccept        friend_accept        = 71;
+    FriendReject        friend_reject        = 72;
+    FriendDelete        friend_delete        = 73;
+    FriendBlock         friend_block         = 74;
+    FriendUnblock       friend_unblock       = 75;
+
+    // ── 好友操作响应 (76-81) ──
+    FriendRequestSentResponse    friend_request_sent_response    = 76;
+    FriendAcceptSuccessResponse  friend_accept_success_response  = 77;
+    FriendRejectSuccessResponse  friend_reject_success_response  = 78;
+    FriendDeleteSuccessResponse  friend_delete_success_response  = 79;
+    FriendBlockSuccessResponse   friend_block_success_response   = 80;
+    FriendUnblockSuccessResponse friend_unblock_success_response = 81;
+
+    // ── 好友通知 (82-85) ──
+    FriendRequestNotification   friend_request_notification   = 82;
+    FriendAcceptedNotification  friend_accepted_notification  = 83;
+    FriendDeletedNotification   friend_deleted_notification   = 84;
+    FriendBlockedNotification   friend_blocked_notification   = 85;
+
+    // ── 群组 (90-92) ──
+    GroupOperation       group_operation       = 90;
+    GroupOperationResult group_operation_result = 91;
+    GroupEvent           group_event           = 92;
+
+    // ── 钱包 (100-101) ──
+    WalletOperation     wallet_operation      = 100;
+    WalletEvent         wallet_event          = 101;
+
+    // ── 通话 (110-111) ──
+    CallSignal          call_signal           = 110;
+    CallEvent           call_event            = 111;
+
+    // ── 设备会话 (120-121) ──
+    SessionOperation    session_operation     = 120;
+    SessionEvent        session_event         = 121;
+
+    // ── 在线状态 (130-132) ──
+    PresenceQuery       presence_query        = 130;
+    PresenceResponse    presence_response     = 131;
+    TypingStatus        typing_status         = 132;
+
+    // ── 通知 (140) ──
+    Notification        notification          = 140;
+
+    // ── ACK 确认 (150-151) ──
+    MessageAck          message_ack           = 150;
+    BatchAck            batch_ack             = 151;
+
+    // ── 错误 (200) ──
+    ErrorMessage        error_message         = 200;
+
+    // ── JSON 兜底 - 过渡期使用 (255) ──
+    string              json_fallback         = 255;
+  }
+}

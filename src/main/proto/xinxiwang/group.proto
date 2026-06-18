@@ -1,0 +1,504 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ══════════════════════════════════════════════════════════════
+// 通用辅助类型
+// ══════════════════════════════════════════════════════════════
+
+message StringList {
+  repeated string values = 1;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 群组操作请求（客户端 → 服务端）
+// ══════════════════════════════════════════════════════════════
+
+message GroupOperation {
+  oneof operation {
+    CreateGroupRequest              create_group               = 1;
+    GroupInviteRequest              group_invite               = 2;
+    GroupKickRequest                group_kick                 = 3;
+    GroupKickInactiveRequest        group_kick_inactive        = 4;
+    GroupQuitRequest                group_quit                 = 5;
+    GroupDisbandRequest             group_disband              = 6;
+    GroupTransferOwnerRequest       group_transfer_owner       = 7;
+    GroupUpdateRequest              group_update               = 8;
+    GroupSetAnnouncementRequest     group_set_announcement     = 9;
+    GroupSetMuteAllRequest          group_set_mute_all         = 10;
+    GroupMuteMemberRequest         group_mute_member          = 11;
+    GroupSetBlockLinksRequest       group_set_block_links      = 12;
+    GroupSetAddFriendModeRequest    group_set_add_friend_mode  = 13;
+    GroupSetJoinModeRequest         group_set_join_mode        = 14;
+    GroupSetSearchableRequest       group_set_searchable       = 15;
+    GroupSetHistoryVisibleRequest   group_set_history_visible  = 16;
+    GroupSetMaxMembersRequest       group_set_max_members      = 17;
+    GroupSetAdminRequest            group_set_admin            = 18;
+    GroupUpdateMyNicknameRequest    group_update_my_nickname   = 19;
+    GroupUpdateRemarkRequest        group_update_remark        = 20;
+    GroupSaveToContactsRequest      group_save_to_contacts     = 21;
+    GetGroupMembersRequest          get_group_members          = 22;
+    GetGroupReadStatusRequest       get_group_read_status      = 23;
+    GroupApplyJoinRequest           group_apply_join           = 24;
+    GroupApproveJoinRequest         group_approve_join         = 25;
+    GroupRejectJoinRequest          group_reject_join          = 26;
+    GetJoinRequestsRequest          get_join_requests          = 27;
+    SearchGroupsRequest             search_groups              = 28;
+    PinMessageRequest               pin_message                = 29;
+    UnpinMessageRequest             unpin_message              = 30;
+  }
+}
+
+// ── 创建群聊 ──
+message CreateGroupRequest {
+  string name = 1;
+  optional string avatar_url = 2;
+  repeated string member_ids = 3;
+  int32 join_mode = 4;    // 0=不限制, 1=仅群成员可邀请, 2=仅管理员可邀请
+  int32 max_members = 5;  // 默认 5000
+}
+
+// ── 邀请成员 ──
+message GroupInviteRequest {
+  string conversation_id = 1;
+  repeated string member_ids = 2;
+}
+
+// ── 踢出成员 ──
+message GroupKickRequest {
+  string conversation_id = 1;
+  string target_id = 2;
+}
+
+// ── 批量踢出不活跃成员 ──
+message GroupKickInactiveRequest {
+  string conversation_id = 1;
+  repeated string user_ids = 2;
+}
+
+// ── 退出群聊 ──
+message GroupQuitRequest {
+  string conversation_id = 1;
+}
+
+// ── 解散群聊 ──
+message GroupDisbandRequest {
+  string conversation_id = 1;
+}
+
+// ── 转让群主 ──
+message GroupTransferOwnerRequest {
+  string conversation_id = 1;
+  string new_owner_id = 2;
+}
+
+// ── 更新群信息（名称/头像）──
+message GroupUpdateRequest {
+  string conversation_id = 1;
+  optional string name = 2;
+  optional string avatar_url = 3;
+}
+
+// ── 设置群公告 ──
+message GroupSetAnnouncementRequest {
+  string conversation_id = 1;
+  string content = 2;
+}
+
+// ── 全体禁言 ──
+message GroupSetMuteAllRequest {
+  string conversation_id = 1;
+  bool mute = 2;
+}
+
+// ── 禁言/取消禁言成员 ──
+message GroupMuteMemberRequest {
+  string conversation_id = 1;
+  string target_id = 2;
+  bool mute = 3;
+}
+
+// ── 屏蔽链接 ──
+message GroupSetBlockLinksRequest {
+  string conversation_id = 1;
+  bool block = 2;
+}
+
+// ── 群内加好友模式 ──
+message GroupSetAddFriendModeRequest {
+  string conversation_id = 1;
+  int32 mode = 2;
+}
+
+// ── 入群方式 ──
+message GroupSetJoinModeRequest {
+  string conversation_id = 1;
+  int32 mode = 2;
+}
+
+// ── 可搜索性 ──
+message GroupSetSearchableRequest {
+  string conversation_id = 1;
+  bool value = 2;
+}
+
+// ── 历史消息可见 ──
+message GroupSetHistoryVisibleRequest {
+  string conversation_id = 1;
+  bool value = 2;
+}
+
+// ── 最大成员数 ──
+message GroupSetMaxMembersRequest {
+  string conversation_id = 1;
+  int32 max = 2;
+}
+
+// ── 设置/取消管理员 ──
+message GroupSetAdminRequest {
+  string conversation_id = 1;
+  string target_id = 2;
+  bool is_admin = 3;
+}
+
+// ── 修改群内昵称 ──
+message GroupUpdateMyNicknameRequest {
+  string conversation_id = 1;
+  optional string nickname = 2;
+}
+
+// ── 修改群备注 ──
+message GroupUpdateRemarkRequest {
+  string conversation_id = 1;
+  optional string remark = 2;
+}
+
+// ── 保存到通讯录 ──
+message GroupSaveToContactsRequest {
+  string conversation_id = 1;
+  bool save = 2;
+}
+
+// ── 获取群成员列表 ──
+message GetGroupMembersRequest {
+  string conversation_id = 1;
+}
+
+// ── 获取群已读状态 ──
+message GetGroupReadStatusRequest {
+  string conversation_id = 1;
+}
+
+// ── 申请加群 ──
+message GroupApplyJoinRequest {
+  string conversation_id = 1;
+  string message = 2;
+}
+
+// ── 批准加群申请 ──
+message GroupApproveJoinRequest {
+  string request_id = 1;
+}
+
+// ── 拒绝加群申请 ──
+message GroupRejectJoinRequest {
+  string request_id = 1;
+}
+
+// ── 获取加群申请列表 ──
+message GetJoinRequestsRequest {
+  string conversation_id = 1;
+}
+
+// ── 搜索群聊 ──
+message SearchGroupsRequest {
+  string keyword = 1;
+}
+
+// ── 置顶消息 ──
+message PinMessageRequest {
+  string conversation_id = 1;
+  string message_id = 2;
+}
+
+// ── 取消置顶消息 ──
+message UnpinMessageRequest {
+  string conversation_id = 1;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 群组操作响应（服务端 → 客户端）
+// ══════════════════════════════════════════════════════════════
+
+message GroupOperationResult {
+  oneof result {
+    CreateGroupSuccess              create_group_success               = 1;
+    GroupInviteSuccess              group_invite_success               = 2;
+    GroupKickSuccess                group_kick_success                 = 3;
+    GroupKickInactiveSuccess        group_kick_inactive_success        = 4;
+    GroupQuitSuccess                group_quit_success                 = 5;
+    GroupDisbandSuccess             group_disband_success              = 6;
+    GroupTransferOwnerSuccess       group_transfer_owner_success       = 7;
+    GroupUpdateSuccess              group_update_success               = 8;
+    GroupSetAnnouncementSuccess     group_set_announcement_success     = 9;
+    GroupSetMuteAllSuccess          group_set_mute_all_success         = 10;
+    GroupMuteMemberSuccess         group_mute_member_success          = 11;
+    GroupSetBlockLinksSuccess       group_set_block_links_success      = 12;
+    GroupSetAddFriendModeSuccess    group_set_add_friend_mode_success  = 13;
+    GroupSetJoinModeSuccess         group_set_join_mode_success        = 14;
+    GroupSetSearchableSuccess       group_set_searchable_success       = 15;
+    GroupSetHistoryVisibleSuccess   group_set_history_visible_success  = 16;
+    GroupSetMaxMembersSuccess       group_set_max_members_success      = 17;
+    GroupSetAdminSuccess            group_set_admin_success            = 18;
+    GroupUpdateMyNicknameSuccess    group_update_my_nickname_success   = 19;
+    GroupUpdateRemarkSuccess        group_update_remark_success        = 20;
+    GroupSaveToContactsSuccess      group_save_to_contacts_success     = 21;
+    GroupMembersResponse            group_members_response             = 22;
+    GroupReadStatusResponse         group_read_status_response         = 23;
+    GroupApplyJoinSuccess           group_apply_join_success           = 24;
+    GroupApproveJoinSuccess         group_approve_join_success         = 25;
+    GroupRejectJoinSuccess          group_reject_join_success          = 26;
+    JoinRequestsResponse            join_requests_response             = 27;
+    SearchGroupsResponse            search_groups_response             = 28;
+    PinMessageSuccess               pin_message_success                = 29;
+    UnpinMessageSuccess             unpin_message_success              = 30;
+  }
+}
+
+message CreateGroupSuccess {
+  string conversation_id = 1;
+  string name = 2;
+  optional string avatar_url = 3;
+  string owner_id = 4;
+  repeated string admin_ids = 5;
+  int32 join_mode = 6;
+  int32 max_members = 7;
+  bool mute_all = 8;
+  bool block_links = 9;
+  int32 member_count = 10;
+}
+
+message GroupTransferOwnerSuccess {
+  string conversation_id = 1;
+  string new_owner_id = 2;
+}
+
+// 简单成功响应（无额外数据）
+message GroupInviteSuccess {}
+message GroupKickSuccess {}
+message GroupKickInactiveSuccess {}
+message GroupQuitSuccess {}
+message GroupDisbandSuccess {}
+message GroupUpdateSuccess {}
+message GroupSetAnnouncementSuccess {}
+message GroupSetMuteAllSuccess {}
+message GroupMuteMemberSuccess {}
+message GroupSetBlockLinksSuccess {}
+message GroupSetAddFriendModeSuccess {}
+message GroupSetJoinModeSuccess {}
+message GroupSetSearchableSuccess {}
+message GroupSetHistoryVisibleSuccess {}
+message GroupSetMaxMembersSuccess {}
+message GroupSetAdminSuccess {}
+message GroupUpdateMyNicknameSuccess {}
+message GroupUpdateRemarkSuccess {}
+message GroupSaveToContactsSuccess {}
+message GroupApplyJoinSuccess {}
+message GroupApproveJoinSuccess {}
+message GroupRejectJoinSuccess {}
+message PinMessageSuccess {}
+message UnpinMessageSuccess {}
+
+// ── 群成员信息 ──
+message GroupMemberInfo {
+  string user_id = 1;
+  optional string display_name = 2;
+  optional string avatar_url = 3;
+  optional string my_nickname = 4;
+  int32 role = 5;            // 0=普通成员, 1=管理员, 2=群主
+  int64 last_active_at = 6;
+  bool is_muted = 7;
+}
+
+message GroupMembersResponse {
+  repeated GroupMemberInfo members = 1;
+}
+
+// ── 群已读状态 ──
+message GroupReadStatusResponse {
+  string conversation_id = 1;
+  map<string, int64> read_status = 2;  // userId → seqId
+}
+
+// ── 加群申请信息 ──
+message JoinRequestInfo {
+  string request_id = 1;
+  string applicant_id = 2;
+  optional string applicant_name = 3;
+  optional string applicant_avatar = 4;
+  string message = 5;
+  int64 created_at = 6;
+}
+
+message JoinRequestsResponse {
+  repeated JoinRequestInfo requests = 1;
+}
+
+// ── 搜索群结果 ──
+message GroupSearchResult {
+  string conversation_id = 1;
+  string name = 2;
+  optional string avatar_url = 3;
+  int32 member_count = 4;
+}
+
+message SearchGroupsResponse {
+  repeated GroupSearchResult groups = 1;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 群组事件（服务端广播 → 客户端）
+// ══════════════════════════════════════════════════════════════
+
+message GroupEvent {
+  oneof event {
+    GroupCreatedEvent                    group_created                     = 1;
+    GroupMemberJoinedEvent               group_member_joined               = 2;
+    GroupMemberLeftEvent                 group_member_left                 = 3;
+    GroupDisbandedEvent                  group_disbanded                   = 4;
+    GroupSettingsUpdatedEvent            group_settings_updated            = 5;
+    GroupInfoUpdatedEvent                group_info_updated                = 6;
+    GroupAnnouncementUpdatedEvent        group_announcement_updated        = 7;
+    GroupJoinRequestNotificationEvent    group_join_request_notification   = 8;
+    GroupJoinApprovedEvent               group_join_approved               = 9;
+    GroupJoinRejectedEvent               group_join_rejected               = 10;
+    GroupJoinRequestCountUpdatedEvent    group_join_request_count_updated  = 11;
+    GroupMemberInfoUpdatedEvent          group_member_info_updated         = 12;
+    MessagePinnedEvent                   message_pinned                    = 13;
+    MessageUnpinnedEvent                 message_unpinned                  = 14;
+  }
+}
+
+// ── 群聊创建 ──
+message GroupCreatedEvent {
+  string conversation_id = 1;
+  string name = 2;
+  optional string avatar_url = 3;
+  string owner_id = 4;
+  optional string owner_name = 5;
+  int32 member_count = 6;
+  repeated string members = 7;
+}
+
+// ── 新成员加入 ──
+message NewMemberInfo {
+  string user_id = 1;
+  optional string display_name = 2;
+  optional string avatar_url = 3;
+}
+
+message GroupMemberJoinedEvent {
+  string conversation_id = 1;
+  repeated NewMemberInfo new_members = 2;
+  int32 member_count = 3;
+}
+
+// ── 成员离开（退群/被踢）──
+message GroupMemberLeftEvent {
+  string conversation_id = 1;
+  string user_id = 2;
+  optional string display_name = 3;
+  string reason = 4;  // "kick" 或 "quit"
+}
+
+// ── 群聊解散 ──
+message GroupDisbandedEvent {
+  string conversation_id = 1;
+}
+
+// ── 群设置更新（仅包含变更的字段）──
+// 使用 optional 区分"未变更"与"变更为默认值"
+// 对 repeated 字段使用 StringList 包装以区分"未发送"与"空列表"
+message GroupSettingsUpdatedEvent {
+  string conversation_id = 1;
+  optional string owner_id = 2;
+  optional StringList admin_ids = 3;
+  optional bool mute_all = 4;
+  optional StringList muted_members = 5;
+  optional bool block_links = 6;
+  optional int32 add_friend_mode = 7;
+  optional int32 join_mode = 8;
+  optional bool searchable = 9;
+  optional bool history_visible = 10;
+  optional int32 max_members = 11;
+}
+
+// ── 群信息更新（名称/头像）──
+message GroupInfoUpdatedEvent {
+  string conversation_id = 1;
+  optional string name = 2;
+  optional string avatar_url = 3;
+}
+
+// ── 群公告更新 ──
+message GroupAnnouncementUpdatedEvent {
+  string conversation_id = 1;
+  string announcement = 2;
+  int64 updated_at = 3;
+  string updated_by = 4;
+}
+
+// ── 加群申请通知（发给管理员）──
+message GroupJoinRequestNotificationEvent {
+  string request_id = 1;
+  string conversation_id = 2;
+  optional string group_name = 3;
+  string applicant_id = 4;
+  optional string applicant_name = 5;
+  optional string applicant_avatar = 6;
+  string message = 7;
+  int32 pending_count = 8;
+}
+
+// ── 加群申请已通过（发给申请者）──
+message GroupJoinApprovedEvent {
+  string conversation_id = 1;
+  optional string group_name = 2;
+}
+
+// ── 加群申请已拒绝（发给申请者）──
+message GroupJoinRejectedEvent {
+  string conversation_id = 1;
+  optional string group_name = 2;
+}
+
+// ── 待审核申请数量更新（发给管理员）──
+message GroupJoinRequestCountUpdatedEvent {
+  string conversation_id = 1;
+  int32 pending_count = 2;
+}
+
+// ── 群成员信息更新（昵称等）──
+message GroupMemberInfoUpdatedEvent {
+  string conversation_id = 1;
+  string user_id = 2;
+  optional string my_nickname = 3;
+}
+
+// ── 消息置顶 ──
+message MessagePinnedEvent {
+  string conversation_id = 1;
+  string message_id = 2;
+  optional string content = 3;
+  optional int32 content_type = 4;
+  optional string sender_name = 5;
+  optional int64 seq_id = 6;
+  string pinned_by = 7;
+  int64 pinned_at = 8;
+}
+
+// ── 取消置顶 ──
+message MessageUnpinnedEvent {
+  string conversation_id = 1;
+}

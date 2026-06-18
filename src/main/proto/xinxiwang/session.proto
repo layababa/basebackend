@@ -1,0 +1,58 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ─── Session Operations (client → server) ───
+
+message SessionOperation {
+  oneof operation {
+    GetActiveSessions get_sessions = 1;
+    TerminateSession terminate = 2;
+    TerminateAllOtherSessions terminate_all = 3;
+  }
+}
+
+message GetActiveSessions {
+  // no fields needed
+}
+
+message TerminateSession {
+  string session_id = 1;
+}
+
+message TerminateAllOtherSessions {
+  // no fields needed
+}
+
+// ─── Session Events (server → client) ───
+
+message SessionEvent {
+  oneof event {
+    ActiveSessionsResponse active_sessions = 1;
+    SessionTerminated terminated = 2;
+    AllOtherSessionsTerminated all_terminated = 3;
+  }
+}
+
+message DeviceSession {
+  string id = 1;
+  string device_name = 2;
+  string platform = 3;
+  string ip = 4;
+  int64 last_active_at = 5;
+  int64 created_at = 6;
+  bool is_current = 7;
+}
+
+message ActiveSessionsResponse {
+  repeated DeviceSession sessions = 1;
+}
+
+message SessionTerminated {
+  string session_id = 1;
+}
+
+message AllOtherSessionsTerminated {
+  int32 count = 1;
+}

@@ -1,0 +1,71 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+import "xinxiwang/chat.proto";
+
+// --- Sync (incremental pull after reconnect) ---
+
+message SyncRequest {
+  string conversation_id = 1;
+  int64 after_seq_id = 2;
+}
+
+message SyncResponse {
+  string conversation_id = 1;
+  repeated NewMessage messages = 2;
+}
+
+// --- History (paginated, load-more) ---
+
+message GetHistory {
+  string conversation_id = 1;
+  int64 before_seq_id = 2;   // 0 = from latest
+  int32 limit = 3;            // default 30
+}
+
+message HistoryResponse {
+  string conversation_id = 1;
+  repeated NewMessage messages = 2;
+}
+
+// --- Batch history ---
+
+message BatchGetHistory {
+  repeated string conversation_ids = 1;
+  int32 limit = 2;            // default 30, max 50
+}
+
+message BatchHistoryEntry {
+  string conversation_id = 1;
+  repeated NewMessage messages = 2;
+}
+
+message BatchHistoryResponse {
+  repeated BatchHistoryEntry entries = 1;
+}
+
+// --- Read-point ---
+
+message UpdateReadPoint {
+  string conversation_id = 1;
+  int64 seq_id = 2;
+}
+
+message ReadPointUpdated {
+  string conversation_id = 1;
+  int64 seq_id = 2;
+  string user_id = 3;
+}
+
+message BatchUpdateReadPoints {
+  repeated UpdateReadPoint points = 1;
+}
+
+// --- Group read update (server push) ---
+
+message GroupReadUpdate {
+  string conversation_id = 1;
+  map<string, int64> read_map = 2;
+}

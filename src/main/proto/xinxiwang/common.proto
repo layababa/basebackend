@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package xinxiwang;
+
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ContentType - message content type enumeration
+enum ContentType {
+  TEXT           = 0;
+  IMAGE          = 1;
+  VOICE          = 2;
+  VIDEO          = 3;
+  FILE           = 4;
+  LOCATION       = 5;
+  BUSINESS_CARD  = 6;
+  RED_PACKET     = 7;
+  SYSTEM         = 8;
+  CALL_RECORD    = 9;
+  TRANSFER       = 10;
+}
+
+// ConversationType - conversation type enumeration
+enum ConversationType {
+  PRIVATE  = 0;
+  GROUP    = 1;
+  OFFICIAL = 2;
+}
+
+// ErrorMessage - standard error response
+message ErrorMessage {
+  string type                 = 1;
+  string message              = 2;
+  map<string, string> details = 3;
+}

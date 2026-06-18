@@ -1,0 +1,22 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+message AuthRequest {
+  string token = 1;
+  string device_name = 2;
+  string platform = 3;
+  string device_id = 4;
+  bool supports_batch = 5;
+  string protocol = 6;  // "protobuf" 或空（JSON）
+}
+
+message AuthSuccess {
+  string user_id = 1;
+  string negotiated_protocol = 2;  // "protobuf" 或 "json"
+}
+
+message AuthFailed {
+  string message = 1;
+}

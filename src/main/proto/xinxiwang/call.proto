@@ -1,0 +1,116 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ─── Call Signal (client → server) ───
+
+enum CallType {
+  CALL_TYPE_AUDIO = 0;
+  CALL_TYPE_VIDEO = 1;
+}
+
+message CallSignal {
+  oneof signal {
+    CallInvite invite = 1;
+    CallAccept accept = 2;
+    CallReject reject = 3;
+    CallCancel cancel = 4;
+    CallHangup hangup = 5;
+    CallBusy busy = 6;
+  }
+}
+
+message CallInvite {
+  string target_user_id = 1;
+  CallType call_type = 2;
+}
+
+message CallAccept {
+  string target_user_id = 1;
+  int32 room_id = 2;
+  string device_id = 3;
+}
+
+message CallReject {
+  string target_user_id = 1;
+  int32 room_id = 2;
+}
+
+message CallCancel {
+  string target_user_id = 1;
+  int32 room_id = 2;
+}
+
+message CallHangup {
+  string target_user_id = 1;
+  int32 room_id = 2;
+}
+
+message CallBusy {
+  string target_user_id = 1;
+  int32 room_id = 2;
+}
+
+// ─── Call Events (server → client) ───
+
+message CallEvent {
+  oneof event {
+    CallInviteAck invite_ack = 1;
+    IncomingCall incoming_call = 2;
+    CallAccepted accepted = 3;
+    CallAcceptRejected accept_rejected = 4;
+    CallRejected rejected = 5;
+    CallCancelled cancelled = 6;
+    CallEnded ended = 7;
+    CallBusyEvent busy_event = 8;
+  }
+}
+
+message CallInviteAck {
+  int32 room_id = 1;
+  string user_sig = 2;
+  int64 sdk_app_id = 3;
+  string target_user_id = 4;
+}
+
+message IncomingCall {
+  int32 room_id = 1;
+  CallType call_type = 2;
+  string caller_id = 3;
+  string caller_name = 4;
+  string caller_avatar = 5;
+  string user_sig = 6;
+  int64 sdk_app_id = 7;
+}
+
+message CallAccepted {
+  int32 room_id = 1;
+  string user_id = 2;
+  string accepted_device_id = 3;
+}
+
+message CallAcceptRejected {
+  int32 room_id = 1;
+  string reason = 2;
+}
+
+message CallRejected {
+  int32 room_id = 1;
+  string user_id = 2;
+}
+
+message CallCancelled {
+  int32 room_id = 1;
+  string user_id = 2;
+}
+
+message CallEnded {
+  int32 room_id = 1;
+  string user_id = 2;
+}
+
+message CallBusyEvent {
+  int32 room_id = 1;
+  string user_id = 2;
+}

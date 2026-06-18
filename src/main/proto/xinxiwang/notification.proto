@@ -1,0 +1,16 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ─── Unified Notification (server → client) ───
+
+message Notification {
+  string id = 1;
+  string type = 2;           // e.g. "transfer_send", "transfer_receive", "red_packet_send", "red_packet_receive"
+  string title = 3;
+  string detail = 4;
+  string amount = 5;         // for pay-related notifications
+  int64 timestamp = 6;
+  map<string, string> extra = 7;  // extensible key-value metadata
+}

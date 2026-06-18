@@ -1,0 +1,24 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ─── Presence Query (client → server) ───
+
+message PresenceQuery {
+  string target_user_id = 1;
+}
+
+// ─── Presence Response (server → client) ───
+
+message PresenceResponse {
+  string user_id = 1;
+  bool online = 2;
+}
+
+// ─── Typing Status (bidirectional) ───
+
+message TypingStatus {
+  string conversation_id = 1;
+  string user_id = 2;  // set by server when forwarding to peers
+}

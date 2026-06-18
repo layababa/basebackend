@@ -1,0 +1,153 @@
+syntax = "proto3";
+package xinxiwang;
+option java_package = "com.layababateam.xinxiwang_backend.proto";
+option java_multiple_files = true;
+
+// ========== 回复引用 ==========
+
+message ReplyTo {
+  string message_id = 1;
+  string sender_id = 2;
+  string sender_name = 3;
+  string content = 4;
+  int32 content_type = 5;
+}
+
+// ========== 客户端发送聊天消息 ==========
+
+message ChatMessage {
+  string conversation_id = 1;
+  string content = 2;
+  int32 content_type = 3;        // 0=text, 1=image, 2=voice, 3=video
+  repeated string mentions = 4;
+  string client_message_id = 5;
+  string reply_to_message_id = 6;
+}
+
+// ========== 服务端推送新消息 (new_message) ==========
+
+message NewMessage {
+  string id = 1;
+  string conversation_id = 2;
+  string sender_id = 3;
+  string sender_name = 4;
+  string sender_avatar = 5;
+  int32 content_type = 6;
+  string content = 7;
+  int64 seq_id = 8;
+  bool is_recalled = 9;
+  repeated string mentions = 10;
+  int64 created_at = 11;
+  string client_message_id = 12;
+  ReplyTo reply_to = 13;
+  int32 sender_role = 14;       // 0=member, 1=admin, 2=owner
+  string group_name = 15;
+  string group_avatar = 16;
+}
+
+// ========== 发送确认 (message_sent_ack) ==========
+
+message MessageSentAck {
+  string id = 1;
+  string conversation_id = 2;
+  string sender_id = 3;
+  string sender_name = 4;
+  string sender_avatar = 5;
+  int32 content_type = 6;
+  string content = 7;
+  int64 seq_id = 8;
+  bool is_recalled = 9;
+  repeated string mentions = 10;
+  int64 created_at = 11;
+  string client_message_id = 12;
+  ReplyTo reply_to = 13;
+  int32 sender_role = 14;
+  string group_name = 15;
+  string group_avatar = 16;
+}
+
+// ========== 发送失败 (message_send_failed) ==========
+
+message MessageSendFailed {
+  string client_message_id = 1;
+  string conversation_id = 2;
+  string reason = 3;
+}
+
+// ========== 消息操作请求 ==========
+
+message MessageRecall {
+  string message_id = 1;
+}
+
+message MessageDelete {
+  string message_id = 1;
+  bool for_all = 2;
+}
+
+message MessageForward {
+  string message_id = 1;
+  string to_conversation_id = 2;
+}
+
+message MessagePin {
+  string message_id = 1;
+  string conversation_id = 2;
+}
+
+message MessageUnpin {
+  string conversation_id = 1;
+}
+
+// ========== 消息操作通知 ==========
+
+message MessageRecalled {
+  string message_id = 1;
+  string conversation_id = 2;
+  int64 seq_id = 3;
+}
+
+message MessageDeleted {
+  string message_id = 1;
+  string conversation_id = 2;
+  int64 seq_id = 3;
+}
+
+message MessageDeletedLocal {
+  string message_id = 1;
+  string conversation_id = 2;
+  int64 seq_id = 3;
+}
+
+message MessageDeleteSuccess {
+  string message_id = 1;
+  bool for_all = 2;
+}
+
+message MessagePinned {
+  string message_id = 1;
+  string conversation_id = 2;
+  string content = 3;
+  int32 content_type = 4;
+  string sender_name = 5;
+  int64 seq_id = 6;
+  string pinned_by = 7;
+  int64 pinned_at = 8;
+}
+
+message MessageUnpinned {
+  string conversation_id = 1;
+}
+
+// ========== ACK 确认 ==========
+
+message MessageAck {
+  int64 seq_id = 1;
+  string conversation_id = 2;
+}
+
+message BatchAck {
+  repeated MessageAck acks = 1;
+}
+
+// 已读同步消息已移至 sync.proto（避免同包名重复定义）
