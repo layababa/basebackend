@@ -11,6 +11,7 @@ import com.layababateam.xinxiwang_backend.dto.LikeReportRequest
 import com.layababateam.xinxiwang_backend.dto.TransferSpeakerRequest
 import com.layababateam.xinxiwang_backend.dto.UserIdRequest
 import com.layababateam.xinxiwang_backend.service.BroadcastPort
+import com.layababateam.xinxiwang_backend.service.StringListRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
@@ -311,7 +312,7 @@ class BroadcastController(
 
     @GetMapping("/broadcasts/card-snapshot")
     fun cardSnapshotBatch(@RequestParam ids: String): ResponseEntity<ApiResponse<*>> {
-        val list = ids.split(",").filter { it.isNotBlank() }
+        val list = StringListRules.delimited(ids)
         return ResponseEntity.ok(ApiResponse.ok(mapOf("snapshots" to broadcastPort.cardSnapshots(list))))
     }
 }

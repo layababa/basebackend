@@ -3,6 +3,7 @@ package com.layababateam.xinxiwang_backend.dto
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryMode
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicy
 import com.layababateam.xinxiwang_backend.model.MessageDeliveryPolicyScope
+import com.layababateam.xinxiwang_backend.service.StringListRules
 
 data class MessageDeliveryPolicyRequest(
     val name: String? = null,
@@ -60,7 +61,7 @@ data class MessageDeliveryPolicyRequest(
         )
 
     private fun normalizedUserIds(): List<String> =
-        userIds.map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(MAX_BATCH_USERS)
+        StringListRules.nonBlank(userIds, max = MAX_BATCH_USERS)
 
     companion object {
         private const val MAX_BATCH_USERS = 10_000

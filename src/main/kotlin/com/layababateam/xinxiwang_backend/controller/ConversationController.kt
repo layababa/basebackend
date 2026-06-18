@@ -4,6 +4,7 @@ import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ConversationDto
 import com.layababateam.xinxiwang_backend.dto.MessageDto
 import com.layababateam.xinxiwang_backend.service.ConversationPort
+import com.layababateam.xinxiwang_backend.service.StringListRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -45,7 +46,7 @@ class ConversationController(
         @RequestParam(required = false, defaultValue = "50") limit: Int,
     ): ResponseEntity<ApiResponse<List<MessageDto>>> {
         val userId = request.getAttribute("userId") as String
-        val contentTypes = types.split(",").mapNotNull { it.trim().toIntOrNull() }
+        val contentTypes = StringListRules.delimited(types).mapNotNull { it.toIntOrNull() }
         return ResponseEntity.ok(ApiResponse.ok(conversationPort.getMediaMessages(userId, id, contentTypes, limit)))
     }
 

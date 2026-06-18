@@ -34,12 +34,7 @@ object GroupMessageSignalRules {
         ConfigBoundaryRules.longValue(value, default, min)
 
     fun normalizeForceFullPushMessageTypes(raw: String?, default: Set<String>): Set<String> {
-        val types = raw
-            ?.split(',', '\n', ';', '，')
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.distinct()
-            .orEmpty()
+        val types = StringListRules.delimited(raw, delimiters = charArrayOf(',', '\n', ';', '，'))
         return types.ifEmpty { default }.toSet()
     }
 

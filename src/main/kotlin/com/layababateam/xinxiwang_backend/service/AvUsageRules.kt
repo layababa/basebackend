@@ -101,10 +101,7 @@ object AvUsageRules {
     }
 
     fun callUserMultiplier(callerId: String?, calleeId: String?): Int {
-        val userIds = listOfNotNull(callerId, calleeId)
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val userIds = StringListRules.nonBlank(listOf(callerId, calleeId))
         return userIds.size.coerceAtLeast(2)
     }
 }

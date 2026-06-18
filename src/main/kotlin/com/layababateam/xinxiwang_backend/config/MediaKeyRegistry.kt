@@ -1,5 +1,6 @@
 package com.layababateam.xinxiwang_backend.config
 
+import com.layababateam.xinxiwang_backend.service.StringListRules
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -18,9 +19,7 @@ class MediaKeyRegistry(
 
     @PostConstruct
     fun init() {
-        keysConfig.split(",")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+        StringListRules.delimited(keysConfig)
             .forEach { entry -> parseEntry(entry) }
 
         if (!keys.containsKey(currentId)) {
