@@ -8,6 +8,21 @@ data class EncryptedMediaOssKey(
     val thumb: Boolean,
 )
 
+fun resolveDirectUploadDir(category: String): String =
+    if (category in DIRECT_UPLOAD_DIRS) category else "files"
+
+fun parseEncryptedMainCategory(ossKey: String, mediaId: String): String? {
+    val parsed = parseEncryptedMediaOssKey(ossKey) ?: return null
+    if (parsed.thumb || parsed.mediaId != mediaId || "/" in parsed.category) return null
+    return parsed.category.takeIf { it.isNotBlank() }
+}
+
+fun expectedEncryptedThumbnailOssKey(category: String, mediaId: String): String =
+    "encrypted/thumbnails/$category/$mediaId.bin"
+
+fun isExpectedEncryptedThumbnailOssKey(thumbOssKey: String, category: String, mediaId: String): Boolean =
+    thumbOssKey == expectedEncryptedThumbnailOssKey(category, mediaId)
+
 fun convertedPlainMediaOssKey(category: String, mediaId: String, ext: String): String? {
     val normalizedCategory = category.trim().trim('/')
     val normalizedExt = normalizedPlainMediaExt(normalizedCategory, ext)
@@ -76,6 +91,18 @@ fun resolvePlainMediaOssKey(media: MediaObject, thumb: Boolean): String? {
 
 private fun String?.nonBlank(): String? =
     this?.takeIf { it.isNotBlank() }
+
+private val DIRECT_UPLOAD_DIRS = setOf(
+    "avatars",
+    "images",
+    "videos",
+    "audio",
+    "files",
+    "stickers",
+    "moment_images",
+    "moment_videos",
+    "feedback_images",
+)
 
 private fun normalizedPlainMediaExt(category: String, ext: String): String {
     val requestedExt = ext.trim().trimStart('.').lowercase()
