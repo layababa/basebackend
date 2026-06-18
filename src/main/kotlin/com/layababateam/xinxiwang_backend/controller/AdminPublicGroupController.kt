@@ -5,6 +5,7 @@ import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.PagedData
 import com.layababateam.xinxiwang_backend.service.AdminPublicGroupPort
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
@@ -28,7 +29,9 @@ class AdminPublicGroupController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<ApiResponse<PagedData<*>>> {
-        val pageable = PageRequest.of(page, size.coerceIn(1, 100))
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 100)
+        val pageable = PageRequest.of(safePage, safeSize)
         val result = adminPublicGroupPort.listPublicGroupApplies(status, pageable)
 
         return ResponseEntity.ok(
@@ -36,8 +39,8 @@ class AdminPublicGroupController(
                 PagedData(
                     items = result.content,
                     total = result.totalElements,
-                    page = page,
-                    size = size,
+                    page = safePage,
+                    size = safeSize,
                 ),
             ),
         )

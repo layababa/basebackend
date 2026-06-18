@@ -6,6 +6,7 @@ import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.PagedData
 import com.layababateam.xinxiwang_backend.service.AdminModerationPort
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
@@ -31,9 +32,11 @@ class AdminModerationController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<ApiResponse<PagedData<*>>> {
-        val result = adminModerationPort.listReports(status, PageRequest.of(page, size.coerceIn(1, 100)))
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 100)
+        val result = adminModerationPort.listReports(status, PageRequest.of(safePage, safeSize))
         return ResponseEntity.ok(
-            ApiResponse.ok(PagedData(items = result.content, total = result.totalElements, page = page, size = size)),
+            ApiResponse.ok(PagedData(items = result.content, total = result.totalElements, page = safePage, size = safeSize)),
         )
     }
 
@@ -69,13 +72,15 @@ class AdminModerationController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<ApiResponse<PagedData<*>>> {
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 50)
         val result = adminModerationPort.getUserReportHistory(
             userId,
             role,
-            PageRequest.of(page, size.coerceIn(1, 50)),
+            PageRequest.of(safePage, safeSize),
         )
         return ResponseEntity.ok(
-            ApiResponse.ok(PagedData(items = result.content, total = result.totalElements, page = page, size = size)),
+            ApiResponse.ok(PagedData(items = result.content, total = result.totalElements, page = safePage, size = safeSize)),
         )
     }
 

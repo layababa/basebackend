@@ -9,6 +9,7 @@ import com.layababateam.xinxiwang_backend.repository.UserRepository
 import com.layababateam.xinxiwang_backend.repository.WalletTransactionRepository
 import com.layababateam.xinxiwang_backend.service.AdminWalletService
 import com.layababateam.xinxiwang_backend.service.ExcelExportService
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -60,8 +61,9 @@ class AdminWalletController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<ApiResponse<PagedData<*>>> {
-        val safeSize = size.coerceIn(1, 100)
-        val pageable = PageRequest.of(page, safeSize)
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 100)
+        val pageable = PageRequest.of(safePage, safeSize)
         val transactions = walletTransactionRepository.findByUserIdOrderByCreatedAtDesc(id, pageable)
 
         return ResponseEntity.ok(
@@ -69,7 +71,7 @@ class AdminWalletController(
                 PagedData(
                     items = transactions.content,
                     total = transactions.totalElements,
-                    page = page,
+                    page = safePage,
                     size = safeSize,
                 )
             )

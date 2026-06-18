@@ -8,6 +8,7 @@ import com.layababateam.xinxiwang_backend.dto.MeetingJoinResponse
 import com.layababateam.xinxiwang_backend.dto.PagedData
 import com.layababateam.xinxiwang_backend.dto.ParticipantDto
 import com.layababateam.xinxiwang_backend.service.AdminMeetingPort
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,8 +31,8 @@ class AdminMeetingController(
         @RequestParam(required = false) status: Int?,
         @RequestParam(required = false) keyword: String?,
     ): ResponseEntity<ApiResponse<PagedData<MeetingDto>>> {
-        val clampedSize = size.coerceIn(1, MAX_PAGE_SIZE)
-        val clampedPage = page.coerceAtLeast(0)
+        val clampedSize = PaginationRules.pageSize(size, MAX_PAGE_SIZE)
+        val clampedPage = PaginationRules.zeroBasedPage(page)
         val (items, total) = adminMeetingPort.getAllMeetings(clampedPage, clampedSize, status, keyword)
         return ResponseEntity.ok(
             ApiResponse.ok(

@@ -2,6 +2,7 @@ package com.layababateam.xinxiwang_backend.controller
 
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.StickerPort
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
@@ -53,10 +54,10 @@ class StickerController(
         @RequestParam(defaultValue = "50") limit: Int,
     ): ResponseEntity<ApiResponse<*>> {
         val userId = request.getAttribute("userId") as String
-        val safeLimit = limit.coerceIn(1, MAX_LIMIT)
-        val safePage = page.coerceAtLeast(0)
+        val safeLimit = PaginationRules.pageSize(limit, MAX_LIMIT)
+        val safePage = PaginationRules.zeroBasedPage(page)
         val allStickers = stickerPort.getFavoriteStickers(userId)
-        val start = safePage * safeLimit
+        val start = PaginationRules.offset(safePage, safeLimit)
         val paged = if (start < allStickers.size) {
             allStickers.subList(start, minOf(start + safeLimit, allStickers.size))
         } else {

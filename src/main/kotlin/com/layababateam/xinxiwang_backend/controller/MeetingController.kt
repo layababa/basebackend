@@ -26,6 +26,7 @@ import com.layababateam.xinxiwang_backend.service.MeetingPasswordIncorrectPortEx
 import com.layababateam.xinxiwang_backend.service.MeetingPasswordRequiredPortException
 import com.layababateam.xinxiwang_backend.service.MeetingPort
 import com.layababateam.xinxiwang_backend.service.MeetingTrtcService
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -660,8 +661,8 @@ class MeetingController(
         request: HttpServletRequest
     ): ResponseEntity<ApiResponse<PagedData<MeetingDto>>> {
         val userId = request.getAttribute("userId") as String
-        val clampedSize = size.coerceIn(1, 50)
-        val clampedPage = page.coerceAtLeast(0)
+        val clampedSize = PaginationRules.pageSize(size, 50)
+        val clampedPage = PaginationRules.zeroBasedPage(page)
         val (items, total) = meetingPort.getUserMeetingHistory(
             userId,
             clampedPage,

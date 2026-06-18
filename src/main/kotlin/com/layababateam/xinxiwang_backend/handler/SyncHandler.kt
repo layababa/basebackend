@@ -3,6 +3,7 @@ package com.layababateam.xinxiwang_backend.handler
 import com.layababateam.xinxiwang_backend.netty.ChannelDeviceResolver
 import com.layababateam.xinxiwang_backend.netty.WsResponseSender
 import com.layababateam.xinxiwang_backend.service.ConversationSyncPort
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import io.netty.channel.ChannelHandlerContext
 import org.springframework.stereotype.Component
 
@@ -36,7 +37,9 @@ class ConversationListHandler(
     override fun handle(ctx: ChannelHandlerContext, userId: String, data: Map<String, Any?>) {
         val afterTimestamp = (data["afterTimestamp"] as? Number)?.toLong()
         val beforeTimestamp = (data["beforeTimestamp"] as? Number)?.toLong()
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, CONVERSATION_LIST_LIMIT_MAX)
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, CONVERSATION_LIST_LIMIT_MAX)
+        }
         val result = conversationSyncPort.getConversationList(
             userId = userId,
             afterTimestamp = afterTimestamp,
@@ -70,7 +73,9 @@ class GetHistoryHandler(
         val conversationId = data["conversationId"] as? String
             ?: throw IllegalArgumentException("会话ID不能为空")
         val beforeSeqId = (data["beforeSeqId"] as? Number)?.toLong()
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, HISTORY_LIMIT_MAX) ?: HISTORY_LIMIT_DEFAULT
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, HISTORY_LIMIT_MAX)
+        } ?: HISTORY_LIMIT_DEFAULT
         val messages = conversationSyncPort.getHistory(userId, conversationId, beforeSeqId, limit)
         wsResponseSender.send(
             ctx,
@@ -97,7 +102,9 @@ class GetRecentHistoryHandler(
     override fun handle(ctx: ChannelHandlerContext, userId: String, data: Map<String, Any?>) {
         val conversationId = data["conversationId"] as? String
             ?: throw IllegalArgumentException("会话ID不能为空")
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, RECENT_HISTORY_LIMIT_MAX)
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, RECENT_HISTORY_LIMIT_MAX)
+        }
             ?: RECENT_HISTORY_LIMIT_DEFAULT
         val messages = conversationSyncPort.getRecentHistory(userId, conversationId, limit)
         wsResponseSender.send(
@@ -127,7 +134,9 @@ class BatchGetHistoryHandler(
         if (conversationIds.size > MAX_BATCH_SIZE) {
             throw IllegalArgumentException("批次查询上限为 ${MAX_BATCH_SIZE} 个会话，当前请求 ${conversationIds.size} 个")
         }
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, BATCH_HISTORY_LIMIT_MAX)
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, BATCH_HISTORY_LIMIT_MAX)
+        }
             ?: BATCH_HISTORY_LIMIT_DEFAULT
         val result = conversationSyncPort.batchGetHistory(userId, conversationIds, limit)
         wsResponseSender.send(ctx, mapOf("type" to "batch_history_response", "data" to result))

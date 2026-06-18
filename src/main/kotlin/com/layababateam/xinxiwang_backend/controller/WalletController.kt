@@ -4,6 +4,7 @@ import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.SetPaymentPasswordRequest
 import com.layababateam.xinxiwang_backend.dto.VerifyPaymentPasswordRequest
 import com.layababateam.xinxiwang_backend.dto.WithdrawRequest
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.WalletPort
 import com.layababateam.xinxiwang_backend.service.WalletResult
 import jakarta.servlet.http.HttpServletRequest
@@ -68,7 +69,14 @@ class WalletController(
         @RequestParam(defaultValue = "all") type: String,
     ): ResponseEntity<ApiResponse<Any>> {
         val userId = request.getAttribute("userId") as String
-        return response(walletPort.getTransactions(userId, page, limit.coerceIn(1, 100), type))
+        return response(
+            walletPort.getTransactions(
+                userId,
+                PaginationRules.zeroBasedPage(page),
+                PaginationRules.pageSize(limit, 100),
+                type,
+            )
+        )
     }
 
     @PostMapping("/webhook/deposit")

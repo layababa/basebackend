@@ -32,7 +32,11 @@ class AdminWithdrawService(
         userId: String?,
         keyword: String?
     ): Page<WithdrawRecord> {
-        val pageable = PageRequest.of(page, size.coerceIn(1, 100), Sort.by(Sort.Direction.DESC, "createdAt"))
+        val pageable = PageRequest.of(
+            PaginationRules.zeroBasedPage(page),
+            PaginationRules.pageSize(size, 100),
+            Sort.by(Sort.Direction.DESC, "createdAt"),
+        )
 
         // 按条件查询
         if (!userId.isNullOrBlank() && status != null) {

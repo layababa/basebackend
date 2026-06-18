@@ -2,6 +2,7 @@ package com.layababateam.xinxiwang_backend.handler.v3
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.layababateam.xinxiwang_backend.handler.MessageHandler
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.V3MessageSyncPort
 import com.layababateam.xinxiwang_backend.service.V3MessageSyncResponseSink
 import com.layababateam.xinxiwang_backend.service.V3QueryMessagesRequest
@@ -25,7 +26,9 @@ class V3QueryMessagesHandler(
             beforeSeqId = (data["beforeSeqId"] as? Number)?.toLong(),
             deliveryDateStart = (data["deliveryDateStart"] as? Number)?.toLong(),
             deliveryDateEnd = (data["deliveryDateEnd"] as? Number)?.toLong(),
-            maxCount = (data["maxCount"] as? Number)?.toInt()?.coerceIn(1, MAX_COUNT) ?: DEFAULT_MAX_COUNT,
+            maxCount = (data["maxCount"] as? Number)?.toInt()?.let {
+                PaginationRules.pageSize(it, MAX_COUNT)
+            } ?: DEFAULT_MAX_COUNT,
             descending = data["descending"] as? Boolean ?: true,
             contentTypes = (data["contentTypes"] as? List<*>)?.filterIsInstance<Number>()?.map { it.toInt() },
             withTotal = data["withTotal"] as? Boolean ?: false,

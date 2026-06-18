@@ -3,6 +3,7 @@ package com.layababateam.xinxiwang_backend.handler.v3
 import com.layababateam.xinxiwang_backend.handler.MessageHandler
 import com.layababateam.xinxiwang_backend.netty.ChannelDeviceResolver
 import com.layababateam.xinxiwang_backend.netty.WsResponseSender
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.V3ConversationPort
 import io.netty.channel.ChannelHandlerContext
 import org.springframework.stereotype.Component
@@ -23,7 +24,9 @@ class V3ConversationListHandler(
     override fun handle(ctx: ChannelHandlerContext, userId: String, data: Map<String, Any?>) {
         val afterTimestamp = (data["afterTimestamp"] as? Number)?.toLong()
         val beforeTimestamp = (data["beforeTimestamp"] as? Number)?.toLong()
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, MAX_LIMIT) ?: DEFAULT_LIMIT
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, MAX_LIMIT)
+        } ?: DEFAULT_LIMIT
         val deviceId = channelDeviceResolver.getDeviceId(ctx.channel())
 
         val (conversations, hasMore) = v3ConversationPort.getConversationListPaginated(

@@ -6,6 +6,7 @@ import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.PagedData
 import com.layababateam.xinxiwang_backend.repository.BotRepository
 import com.layababateam.xinxiwang_backend.service.AdminBotManagementPort
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -79,7 +80,9 @@ class AdminBotController(
             )
         }
         val total = mongoTemplate.count(query, "bots")
-        query.with(PageRequest.of(page, size.coerceIn(1, 100)))
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 100)
+        query.with(PageRequest.of(safePage, safeSize))
         query.with(Sort.by(Sort.Direction.DESC, "createdAt"))
 
         val bots = mongoTemplate.find(query, Map::class.java, "bots").map {
@@ -89,7 +92,7 @@ class AdminBotController(
             }
         }
 
-        return ResponseEntity.ok(ApiResponse.ok(PagedData(items = bots, total = total, page = page, size = size)))
+        return ResponseEntity.ok(ApiResponse.ok(PagedData(items = bots, total = total, page = safePage, size = safeSize)))
     }
 
     @RequireAdmin

@@ -2,6 +2,7 @@ package com.layababateam.xinxiwang_backend.handler.v3
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.layababateam.xinxiwang_backend.handler.MessageHandler
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.V3MessageSyncPort
 import com.layababateam.xinxiwang_backend.service.V3MessageSyncResponseSink
 import io.netty.channel.ChannelHandlerContext
@@ -19,7 +20,9 @@ class V3SyncHandler(
         val conversationId = data["conversationId"] as? String
             ?: throw IllegalArgumentException("会话ID不能为空")
         val afterSeqId = (data["afterSeqId"] as? Number)?.toLong() ?: 0L
-        val limit = (data["limit"] as? Number)?.toInt()?.coerceIn(1, MAX_PAGE_SIZE) ?: DEFAULT_PAGE_SIZE
+        val limit = (data["limit"] as? Number)?.toInt()?.let {
+            PaginationRules.pageSize(it, MAX_PAGE_SIZE)
+        } ?: DEFAULT_PAGE_SIZE
 
         v3MessageSyncPort.syncMessages(
             ctx = ctx,

@@ -7,6 +7,7 @@ import com.layababateam.xinxiwang_backend.extensions.batchIn
 import com.layababateam.xinxiwang_backend.extensions.escapeRegex
 import com.layababateam.xinxiwang_backend.model.WalletTransaction
 import com.layababateam.xinxiwang_backend.service.ExcelExportService
+import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.data.domain.PageRequest
@@ -41,7 +42,8 @@ class AdminTransactionController(
     ): ResponseEntity<ApiResponse<PagedData<Map<String, Any?>>>> {
         val allowedSortFields = setOf("createdAt", "amount", "type", "status")
         val safeSortBy = if (sortBy in allowedSortFields) sortBy else "createdAt"
-        val safeSize = size.coerceIn(1, 100)
+        val safePage = PaginationRules.zeroBasedPage(page)
+        val safeSize = PaginationRules.pageSize(size, 100)
         val direction = if (sortDir.equals("asc", ignoreCase = true)) Sort.Direction.ASC else Sort.Direction.DESC
 
         val criteriaList = mutableListOf<Criteria>()
@@ -69,7 +71,7 @@ class AdminTransactionController(
                     PagedData(
                         items = emptyList(),
                         total = 0L,
-                        page = page,
+                        page = safePage,
                         size = safeSize
                     )
                 ))
@@ -96,7 +98,7 @@ class AdminTransactionController(
         val total = mongoTemplate.count(query, "wallet_transactions")
 
         query.with(Sort.by(direction, safeSortBy))
-        query.with(PageRequest.of(page, safeSize))
+        query.with(PageRequest.of(safePage, safeSize))
 
         val transactions = mongoTemplate.find(query, WalletTransaction::class.java)
 
@@ -134,7 +136,7 @@ class AdminTransactionController(
             PagedData(
                 items = items,
                 total = total,
-                page = page,
+                page = safePage,
                 size = safeSize
             )
         ))
