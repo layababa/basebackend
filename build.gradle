@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     compileOnly 'jakarta.annotation:jakarta.annotation-api:3.0.0'
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+    compileOnly 'io.jsonwebtoken:jjwt-api:0.12.6'
     compileOnly 'com.fasterxml.jackson.core:jackson-annotations:2.20'
     compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
     compileOnly 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
