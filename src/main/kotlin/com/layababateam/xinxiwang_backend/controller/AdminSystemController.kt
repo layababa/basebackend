@@ -12,6 +12,7 @@ import com.layababateam.xinxiwang_backend.model.BannedWordHit
 import com.layababateam.xinxiwang_backend.model.SystemConfig
 import com.layababateam.xinxiwang_backend.service.AdminSystemPort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
+import com.layababateam.xinxiwang_backend.service.StringListRules
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -167,7 +168,7 @@ class AdminSystemController(
         request: HttpServletRequest,
         @Valid @RequestBody body: AdminBatchAddBannedWordsRequest,
     ): ResponseEntity<ApiResponse<*>> {
-        val trimmedWords = body.words.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        val trimmedWords = StringListRules.nonBlank(body.words)
         if (trimmedWords.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error<Any>(ErrorCode.INVALID_PARAM, "违禁词列表不能为空"))
         }

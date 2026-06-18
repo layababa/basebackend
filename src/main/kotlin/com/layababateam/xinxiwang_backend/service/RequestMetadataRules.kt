@@ -8,11 +8,7 @@ package com.layababateam.xinxiwang_backend.service
  */
 object RequestMetadataRules {
     fun forwardedIps(forwardedFor: String?): List<String> =
-        forwardedFor
-            ?.split(",")
-            ?.map { it.trim() }
-            ?.filter { it.isNotBlank() }
-            .orEmpty()
+        StringListRules.delimited(forwardedFor)
 
     fun firstForwardedIp(forwardedFor: String?): String? =
         forwardedIps(forwardedFor).firstOrNull()

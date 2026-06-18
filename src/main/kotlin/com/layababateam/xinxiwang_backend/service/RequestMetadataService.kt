@@ -26,9 +26,7 @@ class RequestMetadataService(
     @Value("\${xinxiwang.admin.audit.trusted-proxies:}") trustedProxyConfig: String
 ) {
     private val configuredTrustedProxies = trustedProxyConfig
-        .split(",")
-        .map { it.trim() }
-        .filter { it.isNotBlank() }
+        .let(StringListRules::delimited)
         .toSet()
 
     fun from(request: HttpServletRequest): RequestMetadata {
