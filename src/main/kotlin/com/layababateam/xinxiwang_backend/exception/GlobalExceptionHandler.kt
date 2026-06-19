@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -182,6 +183,25 @@ class GlobalExceptionHandler {
             }
             else -> "请求格式错误，请检查 JSON 内容"
         }
+    }
+
+    /**
+     * 兜底处理 HttpMessageConversionException（HttpMessageNotReadableException 是其子类，已被上面的更具体 handler 拦截）。
+     * 典型来源：Jackson 无法构造目标类型（如 KotlinModule 未生效时的 InvalidDefinitionException「no Creators」）。
+     * 此前这类异常会落到 handleGenericException → 返回 500/10000，掩盖真实原因；此处统一收成 400。
+     */
+    @ExceptionHandler(HttpMessageConversionException::class)
+    fun handleMessageConversion(
+        ex: HttpMessageConversionException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<Nothing>> {
+        logger.warn("消息转换异常: {}", ex.message)
+        captureClientWarning(ex, request, "message_conversion_error", mapOf(
+            "exceptionClass" to ex.javaClass.name,
+        ))
+        return ResponseEntity.badRequest()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(ApiResponse.error(ErrorCode.INVALID_PARAM, "请求数据格式不正确，请检查后重试"))
     }
 
     @ExceptionHandler(BusinessException::class)
