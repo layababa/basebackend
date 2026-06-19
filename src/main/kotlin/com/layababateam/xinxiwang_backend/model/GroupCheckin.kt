@@ -79,19 +79,25 @@ data class CheckinRecord(
     val userName: String,
     /** 可选留言（本需求签到不强制填写内容） */
     val content: String? = null,
+    /**
+     * 以下运行态字段均带默认值：早期版本（仅 userId/userName/content/createdAt）写入的历史
+     * 签到记录缺失这些字段，无默认值会导致 Spring Data Mongo 反序列化 group_checkins 抛
+     * MappingInstantiationException（streakId must not be null）。默认值保证旧记录可读，
+     * 当前写入路径仍会显式赋全字段，新数据不受影响。
+     */
     /** "yyyyMMdd" 服务器时区自然日 */
-    val signDate: String,
+    val signDate: String = "",
     /** 连续周期序号（活动内自增） */
-    val streakId: Int,
+    val streakId: Int = 0,
     /** 本次签到所属轮次（从 1 起） */
-    val round: Int,
+    val round: Int = 0,
     /** 本次签到后的连续天数（1..roundDays） */
-    val consecutiveDays: Int,
+    val consecutiveDays: Int = 0,
     /** 本次每日积分 */
-    val dailyPoints: Int,
+    val dailyPoints: Int = 0,
     /** 本次触发的节点奖励（未触发=0） */
-    val nodePoints: Int,
+    val nodePoints: Int = 0,
     /** dailyPoints + nodePoints */
-    val totalPoints: Int,
+    val totalPoints: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
 )
