@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.handler.v3
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.handler.MessageHandler
 import com.layababateam.xinxiwang_backend.service.PaginationRules
 import com.layababateam.xinxiwang_backend.service.V3MessageSyncPort
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 class V3SyncHandler(
     private val v3MessageSyncPort: V3MessageSyncPort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) : MessageHandler {
     override val type = "v3_sync"
 

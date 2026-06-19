@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.netty
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import org.springframework.stereotype.Component
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 @Component
 class WsResponseHelper(
     private val channelMessageSender: ChannelMessageSender,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) : WsResponseSender {
     companion object {
         val CURRENT_REQUEST_ID: ThreadLocal<String?> = ThreadLocal()

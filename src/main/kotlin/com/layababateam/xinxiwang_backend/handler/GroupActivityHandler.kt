@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.handler
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.service.GroupActivityPort
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class GroupActivityResponseSender(
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     fun send(ctx: ChannelHandlerContext, data: Map<String, Any?>) {
         ctx.writeAndFlush(TextWebSocketFrame(objectMapper.writeValueAsString(data)))

@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.handler
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.netty.WsResponseSender
 import com.layababateam.xinxiwang_backend.service.PendingCallPort
 import io.netty.channel.ChannelHandlerContext
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class CheckPendingCallHandler(
     private val pendingCallPort: PendingCallPort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
     private val wsResponseSender: WsResponseSender,
 ) : MessageHandler {
     private val log = LoggerFactory.getLogger(CheckPendingCallHandler::class.java)

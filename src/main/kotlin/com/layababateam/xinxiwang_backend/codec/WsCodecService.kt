@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.codec
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.google.protobuf.Message
 import com.google.protobuf.util.JsonFormat
 import com.layababateam.xinxiwang_backend.netty.ProtocolType
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class WsCodecService(
-    private val objectMapper: ObjectMapper
+    private val objectMapper: JsonMapper
 ) {
     private val log = LoggerFactory.getLogger(WsCodecService::class.java)
 

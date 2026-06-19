@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.repository.BroadcastParticipantRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 class BroadcastPushService(
     private val userPushPort: BroadcastUserPushPort,
     private val participantRepository: BroadcastParticipantRepository,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     private val log = LoggerFactory.getLogger(BroadcastPushService::class.java)
 

@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.config.MediaKeySnapshotProvider
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminMediaKeyController(
     private val keySnapshotProvider: MediaKeySnapshotProvider,
     private val mediaKeyBroadcastPort: MediaKeyBroadcastPort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     private val log = LoggerFactory.getLogger(AdminMediaKeyController::class.java)
 

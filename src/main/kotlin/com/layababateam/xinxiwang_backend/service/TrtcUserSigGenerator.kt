@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * 腾讯 TRTC UserSig v2 生成器。
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * SDK 统一维护签名算法，接入方只负责提供 sdkAppId、secretKey 和过期时间策略。
  */
 class TrtcUserSigGenerator(
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     fun generate(userId: String, sdkAppId: Long, secretKey: String, expire: Long): String {
         val currTime = System.currentTimeMillis() / 1000

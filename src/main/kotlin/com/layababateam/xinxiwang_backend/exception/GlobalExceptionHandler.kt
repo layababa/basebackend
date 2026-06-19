@@ -1,9 +1,9 @@
 package com.layababateam.xinxiwang_backend.exception
 
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.databind.exc.InvalidFormatException
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
+import tools.jackson.core.exc.StreamReadException
+import tools.jackson.databind.exc.InvalidFormatException
+import tools.jackson.databind.exc.MismatchedInputException
+import tools.jackson.databind.exc.UnrecognizedPropertyException
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
@@ -157,8 +157,14 @@ class GlobalExceptionHandler {
 
     private fun extractReadableMessage(ex: HttpMessageNotReadableException): String {
         return when (val cause = ex.cause) {
+            // 注意分支顺序：UnrecognizedPropertyException 与 InvalidFormatException 都是
+            // MismatchedInputException 的子类（Jackson 3 hierarchy），必须在 MismatchedInputException
+            // 之前匹配，否则会被通用分支吞掉（迁移后由 GlobalExceptionHandlerTest 坐实）。
+            is UnrecognizedPropertyException -> {
+                "未知字段「${cause.propertyName}」"
+            }
             is InvalidFormatException -> {
-                val field = cause.path.joinToString(".") { it.fieldName ?: "[${it.index}]" }
+                val field = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                 val targetType = cause.targetType?.simpleName ?: "未知"
                 if (field.isNotEmpty()) {
                     "字段「$field」的值格式不正确，期望类型为 $targetType"
@@ -167,18 +173,20 @@ class GlobalExceptionHandler {
                 }
             }
             is MismatchedInputException -> {
-                val field = cause.path.joinToString(".") { it.fieldName ?: "[${it.index}]" }
+                val field = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
                 if (field.isNotEmpty()) {
-                    val isMissing = cause::class.simpleName == "MissingKotlinParameterException"
+                    // Jackson 3 已删除 MissingKotlinParameterException 并并入 MismatchedInputException
+                    // （FasterXML/jackson-module-kotlin #617），改按 message 语义判定「缺少必填字段」。
+                    val msg = cause.message.orEmpty()
+                    val isMissing = msg.contains("missing", ignoreCase = true) ||
+                        msg.contains("null value for creator", ignoreCase = true) ||
+                        msg.contains("due to missing", ignoreCase = true)
                     if (isMissing) "缺少必填字段「$field」" else "字段「$field」的类型不匹配"
                 } else {
                     "请求参数类型不匹配"
                 }
             }
-            is UnrecognizedPropertyException -> {
-                "未知字段「${cause.propertyName}」"
-            }
-            is JsonParseException -> {
+            is StreamReadException -> {
                 "JSON 格式错误，请检查语法"
             }
             else -> "请求格式错误，请检查 JSON 内容"

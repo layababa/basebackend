@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.consumer
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.service.RealtimeEventDispatchPort
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 @Component
 class FriendEventConsumer(
     private val realtimeEventDispatchPort: RealtimeEventDispatchPort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     private val log = LoggerFactory.getLogger(FriendEventConsumer::class.java)
 

@@ -75,7 +75,7 @@
 - 音视频用量段上报：`AvUsageSegmentHandler` 通过用量段端口复用，会议/通话视频段落库和聚合策略由接入方实现
 - 多端设备会话 WebSocket handler：活跃会话查询、终止指定会话、终止其他会话通过会话管理端口复用，设备会话存储、Token 失效和连接踢下线由接入方实现
 - 消息 ACK WebSocket handler：单条 ACK 和批量 ACK 通过消息 ACK 端口复用，ACK 状态存储、重试和裁剪策略由接入方实现
-- 可配置会议 TRTC 签名服务：`MeetingTrtcService` 仅在接入方提供 `xinxiwang.meeting.trtc.secret-key` 时装配
+- 会议 TRTC 签名服务：`MeetingTrtcService` 无条件装配，`xinxiwang.meeting.trtc.secret-key` 缺省为空，`genUserSig` 对空 key 快速失败（拒绝用空密钥签出无效 UserSig）
 - 通用运行时小契约：会话类型扩展函数、WebSocket 协议枚举、WebSocket handler 接口、Netty 心跳处理器、WebSocket 路径路由器、PushDa webhook、置顶消息迁移服务
 - WebSocket 指标组件：`WebSocketMetrics` 统一连接数、认证、收发消息和 handler 耗时指标
 - 通用 WebSocket handler：`GetMyCallStateHandler`、在线状态查询 handler、待接通通话检查 handler、好友操作 handler 通过通话状态、在线状态、待接通通话、好友操作与响应发送端口复用

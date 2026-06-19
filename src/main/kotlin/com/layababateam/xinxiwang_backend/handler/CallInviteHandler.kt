@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.handler
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.service.CallInvitePort
 import com.layababateam.xinxiwang_backend.service.CallInviteResponseSink
 import io.netty.channel.ChannelHandlerContext
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class CallInviteHandler(
     private val callInvitePort: CallInvitePort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) : MessageHandler {
     override val type = "call_invite"
 

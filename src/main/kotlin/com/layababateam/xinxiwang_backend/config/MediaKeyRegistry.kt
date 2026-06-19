@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 class MediaKeyRegistry(
     @Value("\${xinxiwang.media.master-keys}") private val keysConfig: String,
     @Value("\${xinxiwang.media.master-key-current-id}") private val currentId: String,
+    @Value("\${app.environment:\${sentry.environment:production}}") private val appEnvironment: String,
 ) : MediaKeySnapshotProvider {
     private val log = LoggerFactory.getLogger(MediaKeyRegistry::class.java)
     private val keys = ConcurrentHashMap<String, ByteArray>()
@@ -23,14 +24,31 @@ class MediaKeyRegistry(
             .forEach { entry -> parseEntry(entry) }
 
         if (!keys.containsKey(currentId)) {
-            log.warn(
-                "xinxiwang.media.master-key-current-id='{}' not present in xinxiwang.media.master-keys; " +
-                    "generating an EPHEMERAL in-memory key for local development. " +
-                    "Set XINXIWANG_MEDIA_KEYS in production!",
-                currentId,
+            keys[currentId] = guardOrFallback(
+                "current-id='$currentId' 不在 xinxiwang.media.master-keys 中",
             )
-            keys[currentId] = randomKey()
         }
+    }
+
+    /**
+     * 缺密钥/占位符时的环境分流：
+     * - local/dev/test（非 staging/production）→ 兜底生成临时随机密钥 + warn（本地体验不变）。
+     * - staging/production → fail-fast 抛 IllegalStateException 拒绝启动，
+     *   避免临时密钥每次重启变化导致历史媒体密文永久不可解密。
+     * SDK 不保存密钥值；判定开关读自接入方配置 app.environment，不内置环境。
+     */
+    private fun guardOrFallback(reason: String): ByteArray {
+        val env = appEnvironment.trim().lowercase()
+        val isProd = env == "production" || env == "staging"
+        check(!isProd) {
+            "媒体主密钥未配置/为占位符（$reason），$env 环境拒绝使用临时随机密钥" +
+                "（重启后历史密文不可解密）；请设置 XINXIWANG_MEDIA_KEYS"
+        }
+        log.warn(
+            "媒体主密钥未配置/为占位符（{}），{} 环境生成 EPHEMERAL 临时密钥（仅本地/开发）",
+            reason, env,
+        )
+        return randomKey()
     }
 
     private fun parseEntry(entry: String) {
@@ -40,13 +58,7 @@ class MediaKeyRegistry(
         val b64 = entry.substring(idx + 1).trim()
 
         if (b64 == PLACEHOLDER_KEY_VALUE) {
-            log.warn(
-                "xinxiwang.media.master-keys contains placeholder value for keyId '{}'. " +
-                    "Generating an EPHEMERAL in-memory key for local development only. " +
-                    "Set XINXIWANG_MEDIA_KEYS to real base64-encoded 32-byte keys before deploying!",
-                keyId,
-            )
-            keys[keyId] = randomKey()
+            keys[keyId] = guardOrFallback("keyId='$keyId' 为占位符值")
             return
         }
 

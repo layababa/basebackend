@@ -1,6 +1,6 @@
 package com.layababateam.xinxiwang_backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.layababateam.xinxiwang_backend.dto.AuthResponse
 import com.layababateam.xinxiwang_backend.service.LoginHoneypotPort
 import jakarta.servlet.http.HttpServletRequest
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class LoginHoneypotController(
     private val loginHoneypotPort: LoginHoneypotPort,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: JsonMapper,
 ) {
     @RequestMapping(
         "/api/auth/login-admin",

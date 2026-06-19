@@ -27,8 +27,6 @@ dependencies {
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     compileOnly 'io.jsonwebtoken:jjwt-api:0.12.6'
     compileOnly 'com.fasterxml.jackson.core:jackson-annotations:2.20'
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
-    compileOnly 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
     compileOnly 'org.aspectj:aspectjrt:1.9.25'
     compileOnly 'io.sentry:sentry:8.12.0'
     compileOnly 'io.sentry:sentry-spring-boot-starter-jakarta:8.12.0'
@@ -56,6 +54,28 @@ dependencies {
     compileOnly platform('software.amazon.awssdk:bom:2.42.5')
     compileOnly 'software.amazon.awssdk:s3'
     compileOnly 'com.aliyun.oss:aliyun-sdk-oss:3.18.2'
+
+    // --- 测试基座（T3.5 / T4.4）---
+    // SDK 主源码全 compileOnly，test 源集需把被测类真正用到的运行期依赖补齐。
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Jackson 3 databind + kotlin module：TrtcUserSigGenerator / GlobalExceptionHandler 测试运行期
+    // 需要实例化 JsonMapper 并反序列化 Kotlin data class（缺 kotlin module 则复现 Kotlin data class 500）。
+    testImplementation 'tools.jackson.core:jackson-databind:3.0.4'
+    testImplementation 'tools.jackson.module:jackson-module-kotlin:3.0.4'
+    // GlobalExceptionHandler 依赖的异常类型来自 spring-web；其异常处理路径调用 Sentry / Servlet。
+    testImplementation 'org.springframework:spring-web:7.0.2'
+    testImplementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+    testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
+    testImplementation 'io.sentry:sentry:8.12.0'
+    // 被测类（MediaKeyRegistry / GlobalExceptionHandler）使用 slf4j LoggerFactory；
+    // 主源码靠接入方提供，test 运行期需显式补 binding。
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 protobuf {
