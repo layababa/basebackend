@@ -1,12 +1,14 @@
 package com.layababateam.xinxiwang_backend.metrics
 
 import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Component
@@ -17,6 +19,7 @@ class WebSocketMetrics(
     private val typedReceivedCounters = ConcurrentHashMap<String, Counter>()
     private val typedHandlerTimers = ConcurrentHashMap<String, Timer>()
     private val versionCounters = ConcurrentHashMap<String, AtomicInteger>()
+    private val boundOnlineUsersGauge = AtomicBoolean(false)
 
     val connectionsGauge: AtomicInteger =
         registry.gauge("ws.connections.active", activeConnections) ?: activeConnections
@@ -36,6 +39,23 @@ class WebSocketMetrics(
         .register(registry)
 
     fun getActiveConnectionCount(): Int = activeConnections.get()
+
+    /**
+     * 绑定去重在线用户数 gauge（ws_online_users）。
+     *
+     * `ws_connections_active` 计的是 channel 数（含多端/多重连），无法反映真实在线人数。
+     * 接入方在持有去重在线用户注册表（如 `userChannels`，key 为 userId）时，于 `@PostConstruct`
+     * 传入 `{ userChannels.size }` 即可让本指标反映去重后的在线人数。
+     *
+     * 用 supplier 回调反转依赖方向，避免接入方的会话管理器与本类形成构造循环。
+     * 幂等：重复调用仅首次生效。
+     */
+    fun bindOnlineUsersGauge(supplier: () -> Number) {
+        if (!boundOnlineUsersGauge.compareAndSet(false, true)) return
+        Gauge.builder("ws.online.users", supplier) { it().toDouble() }
+            .description("Distinct online users on this node (deduplicated by userId)")
+            .register(registry)
+    }
 
     fun connectionOpened(platform: String? = null, version: String? = null) {
         activeConnections.incrementAndGet()
