@@ -72,6 +72,9 @@ dependencies {
     // 被测类（MediaKeyRegistry / GlobalExceptionHandler）使用 slf4j LoggerFactory；
     // 主源码靠接入方提供，test 运行期需显式补 binding。
     testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+    // WS 心跳 pipeline 集成测试（EmbeddedChannel）+ ws_online_users gauge 测试运行期依赖。
+    testImplementation 'io.netty:netty-all:4.2.10.Final'
+    testImplementation 'io.micrometer:micrometer-core:1.16.1'
 }
 
 tasks.named('test') {
