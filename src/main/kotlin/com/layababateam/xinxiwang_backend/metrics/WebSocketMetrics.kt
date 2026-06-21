@@ -20,6 +20,11 @@ class WebSocketMetrics(
     private val typedHandlerTimers = ConcurrentHashMap<String, Timer>()
     private val versionCounters = ConcurrentHashMap<String, AtomicInteger>()
     private val boundOnlineUsersGauge = AtomicBoolean(false)
+    // ⚠️ Micrometer 对 Gauge 的 state object（这里是 supplier lambda）只持【弱引用】。
+    // 接入方在 @PostConstruct 里传入临时 lambda 绑定后，若本类不强引用住它，lambda 即无强引用
+    // → 被 GC 回收 → gauge 永久读 NaN（线上 ws_online_users 实测 NaN）。用字段钉住强引用。
+    @Suppress("unused")
+    private var onlineUsersSupplier: (() -> Number)? = null
 
     val connectionsGauge: AtomicInteger =
         registry.gauge("ws.connections.active", activeConnections) ?: activeConnections
@@ -52,6 +57,7 @@ class WebSocketMetrics(
      */
     fun bindOnlineUsersGauge(supplier: () -> Number) {
         if (!boundOnlineUsersGauge.compareAndSet(false, true)) return
+        onlineUsersSupplier = supplier  // 强引用，防 Micrometer 弱引用被 GC → NaN
         Gauge.builder("ws.online.users", supplier) { it().toDouble() }
             .description("Distinct online users on this node (deduplicated by userId)")
             .register(registry)
