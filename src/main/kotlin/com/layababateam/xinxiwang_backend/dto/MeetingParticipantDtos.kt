@@ -1,6 +1,8 @@
 package com.layababateam.xinxiwang_backend.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 
 data class ParticipantDto(
     val userId: String,
@@ -20,6 +22,14 @@ data class ParticipantDto(
     val screenShareDenied: Boolean = false,
     @get:JsonProperty("isMuted")
     val isMuted: Boolean = false,
+    @get:JsonProperty("isVirtual")
+    val isVirtual: Boolean = false,
+)
+
+data class AddVirtualParticipantsRequest(
+    @field:Min(0, message = "虚拟成员数量不能小于0")
+    @field:Max(100, message = "虚拟成员数量不能超过100")
+    val count: Int,
 )
 
 data class MeetingRemovalRestrictionDto(

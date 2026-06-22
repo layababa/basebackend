@@ -61,6 +61,13 @@ interface GroupOperationPort {
 
     fun getGroupMembers(conversationId: String): List<Map<String, Any?>>
 
+    fun getGroupMembersForViewer(conversationId: String, viewerId: String): List<Map<String, Any?>> =
+        getGroupMembers(conversationId)
+
+    fun setVirtualMemberCount(operatorId: String, conversationId: String, count: Int): List<Map<String, Any?>> {
+        throw UnsupportedOperationException("Group virtual members are not implemented by this GroupOperationPort")
+    }
+
     fun getGroupReadStatus(conversationId: String): Map<String, Long>
 
     fun applyJoinGroup(operatorId: String, conversationId: String, message: String)

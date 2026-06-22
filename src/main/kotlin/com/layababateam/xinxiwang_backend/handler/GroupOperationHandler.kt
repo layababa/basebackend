@@ -295,6 +295,30 @@ class GroupSetMaxMembersHandler(
 }
 
 @Component
+class GroupSetVirtualMemberCountHandler(
+    private val groupOperationPort: GroupOperationPort,
+    private val responseSender: GroupOperationResponseSender,
+) : MessageHandler {
+    override val type = "group_set_virtual_member_count"
+
+    override fun handle(ctx: ChannelHandlerContext, userId: String, data: Map<String, Any?>) {
+        val conversationId = conversationId(data)
+        val count = intValue(data, "count", "虚拟成员数量不能为空")
+        val members = groupOperationPort.setVirtualMemberCount(userId, conversationId, count)
+        val virtualMemberCount = members.count { member -> isVirtualMember(member) }
+        responseSender.send(
+            ctx,
+            mapOf(
+                "type" to "group_set_virtual_member_count_success",
+                "conversationId" to conversationId,
+                "virtualMemberCount" to virtualMemberCount,
+                "data" to members,
+            ),
+        )
+    }
+}
+
+@Component
 class GroupSetAdminHandler(
     private val groupOperationPort: GroupOperationPort,
     private val responseSender: GroupOperationResponseSender,
@@ -362,7 +386,7 @@ class GetGroupMembersHandler(
             ctx,
             mapOf(
                 "type" to "group_members_response",
-                "data" to groupOperationPort.getGroupMembers(conversationId),
+                "data" to groupOperationPort.getGroupMembersForViewer(conversationId, userId),
                 "conversationId" to conversationId,
             ) + settings,
         )
@@ -493,3 +517,11 @@ private fun messageId(data: Map<String, Any?>): String =
 
 private fun intValue(data: Map<String, Any?>, key: String, errorMessage: String): Int =
     (data[key] as? Number)?.toInt() ?: throw IllegalArgumentException(errorMessage)
+
+private fun isVirtualMember(member: Map<String, Any?>): Boolean =
+    when (val value = member["isVirtual"] ?: member["is_virtual"]) {
+        is Boolean -> value
+        is Number -> value.toInt() != 0
+        is String -> value.equals("true", ignoreCase = true) || value == "1"
+        else -> false
+    }

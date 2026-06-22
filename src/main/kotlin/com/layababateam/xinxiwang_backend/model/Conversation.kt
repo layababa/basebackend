@@ -14,6 +14,7 @@ data class Conversation(
     val type: Int = 0,                         // 參見 ConversationType: 0=私聊, 1=群聊, 2=特殊私聊
     @Indexed
     val members: List<String> = emptyList(),    // 参与者 UID 列表（Multikey Index）
+    val virtualMembers: List<VirtualGroupMember> = emptyList(),
     val lastMessageId: String? = null,
     val lastMessageContent: String? = null,
     val lastMessageContentType: Int = 0,
@@ -52,6 +53,14 @@ data class Conversation(
 
     // ── 置顶消息（最多 5 条，按 pinnedAt 降序，最新在前）──
     val pinnedMessages: List<PinnedMessage> = emptyList()
+)
+
+data class VirtualGroupMember(
+    val id: String,
+    val displayName: String,
+    val avatarUrl: String? = null,
+    val addedBy: String,
+    val addedAt: Long = System.currentTimeMillis(),
 )
 
 data class PinnedMessage(
