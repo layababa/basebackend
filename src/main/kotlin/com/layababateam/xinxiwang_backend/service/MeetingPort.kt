@@ -122,6 +122,10 @@ interface MeetingPort {
 
     fun getParticipants(userId: String, meetingId: String): List<ParticipantDto>
 
+    fun setVirtualParticipants(userId: String, meetingId: String, count: Int): List<ParticipantDto> {
+        throw UnsupportedOperationException("Meeting virtual participants are not implemented by this MeetingPort")
+    }
+
     fun getChatHistory(userId: String, meetingId: String): List<MeetingChatMessageDto>
 
     fun kickParticipant(operatorId: String, meetingId: String, targetUserId: String)

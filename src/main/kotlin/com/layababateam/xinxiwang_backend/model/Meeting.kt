@@ -14,6 +14,7 @@ data class Meeting(
     val type: Int = 0,
     val status: Int = 0,
     val participants: List<String> = emptyList(),
+    val virtualParticipants: List<VirtualMeetingParticipant> = emptyList(),
     val allParticipants: List<String> = emptyList(),
     /** 大会议管理员列表；房主不放入该列表，便于保留房主最高权限。 */
     val adminIds: List<String> = emptyList(),
@@ -77,6 +78,14 @@ data class Meeting(
     val createdAt: Long = System.currentTimeMillis(),
     val endedAt: Long? = null,
     val lastEmptyAt: Long? = null
+)
+
+data class VirtualMeetingParticipant(
+    val id: String,
+    val displayName: String,
+    val avatarUrl: String? = null,
+    val addedBy: String,
+    val addedAt: Long = System.currentTimeMillis(),
 )
 
 data class MeetingParticipantSegment(

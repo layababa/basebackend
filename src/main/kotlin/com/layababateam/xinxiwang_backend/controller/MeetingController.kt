@@ -1,6 +1,7 @@
 package com.layababateam.xinxiwang_backend.controller
 
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
+import com.layababateam.xinxiwang_backend.dto.AddVirtualParticipantsRequest
 import com.layababateam.xinxiwang_backend.dto.CreateMeetingRequest
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.ExtendMeetingRequest
@@ -532,6 +533,23 @@ class MeetingController(
             ResponseEntity.ok(ApiResponse.ok(participants))
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().body(ApiResponse.error(ErrorCode.NOT_FOUND, e.message))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(403).body(ApiResponse.error(ErrorCode.FORBIDDEN, e.message))
+        }
+    }
+
+    @PostMapping("/{meetingId}/virtual-participants")
+    fun setVirtualParticipants(
+        @PathVariable meetingId: String,
+        @Valid @RequestBody req: AddVirtualParticipantsRequest,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiResponse<List<ParticipantDto>>> {
+        val userId = request.getAttribute("userId") as String
+        return try {
+            val participants = meetingPort.setVirtualParticipants(userId, meetingId, req.count)
+            ResponseEntity.ok(ApiResponse.ok(participants, "已设置虚拟成员数量"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(ApiResponse.error(ErrorCode.INVALID_PARAM, e.message))
         } catch (e: IllegalStateException) {
             ResponseEntity.status(403).body(ApiResponse.error(ErrorCode.FORBIDDEN, e.message))
         }
