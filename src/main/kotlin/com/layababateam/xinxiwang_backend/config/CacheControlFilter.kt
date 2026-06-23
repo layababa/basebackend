@@ -22,6 +22,8 @@ class CacheControlFilter : OncePerRequestFilter() {
 
     private fun cacheControlValue(uri: String): String =
         when {
+            uri.contains("/api/web-customer-service/widget.js") -> "public, max-age=300"
+            uri.contains("/api/web-customer-service/public/") -> "no-store"
             uri.contains("/api/user/") -> "private, max-age=60"
             uri.contains("/api/v1/stickers") -> "private, max-age=300"
             uri.contains("/api/upload") -> "no-store"

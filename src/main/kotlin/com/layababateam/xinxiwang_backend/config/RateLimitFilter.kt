@@ -23,6 +23,7 @@ class RateLimitFilter(
         private val RATE_LIMITS = mapOf(
             "/api/user/search" to RateConfig(limit = 20, window = Duration.ofMinutes(1)),
             "/api/upload" to RateConfig(limit = 30, window = Duration.ofMinutes(1)),
+            "/api/web-customer-service/public" to RateConfig(limit = 120, window = Duration.ofMinutes(1)),
             "/api/v1/stickers/upload" to RateConfig(limit = 10, window = Duration.ofMinutes(1)),
         )
         private val DEFAULT_RATE = RateConfig(limit = 100, window = Duration.ofMinutes(1))

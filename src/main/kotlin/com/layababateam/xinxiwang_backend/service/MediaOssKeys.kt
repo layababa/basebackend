@@ -24,6 +24,7 @@ fun normalizeDirectUploadCategory(category: String?): String =
         "moment_image", "moment_images" -> "moment_images"
         "moment_video", "moment_videos" -> "moment_videos"
         "feedback_image", "feedback_images" -> "feedback_images"
+        "customer_service_image", "customer_service_images" -> "customer_service_images"
         else -> "files"
     }
 
@@ -54,6 +55,8 @@ fun convertedPlainMediaOssKeyCandidates(category: String, mediaId: String, ext: 
     val primaryExt = normalizedPlainMediaExt(normalizedCategory, ext)
     val sniffedExts = when (normalizedCategory) {
         "images", "moment_images", "feedback_images", "avatars", "stickers" ->
+            listOf("jpg", "jpeg", "png", "webp", "gif", "bin")
+        "customer_service_images" ->
             listOf("jpg", "jpeg", "png", "webp", "gif", "bin")
         "videos", "moment_videos" ->
             listOf("mp4", "mov", "bin")
@@ -167,6 +170,7 @@ private val DIRECT_UPLOAD_DIRS = setOf(
     "moment_images",
     "moment_videos",
     "feedback_images",
+    "customer_service_images",
 )
 
 private val DIRECT_UPLOAD_SIZE_LIMIT_BYTES = mapOf(
@@ -175,6 +179,7 @@ private val DIRECT_UPLOAD_SIZE_LIMIT_BYTES = mapOf(
     "moment_images" to 15L * 1024 * 1024,
     "moment_videos" to 500L * 1024 * 1024,
     "feedback_images" to 10L * 1024 * 1024,
+    "customer_service_images" to 10L * 1024 * 1024,
     "images" to 15L * 1024 * 1024,
     "videos" to 2L * 1024 * 1024 * 1024,
     "files" to 2L * 1024 * 1024 * 1024,

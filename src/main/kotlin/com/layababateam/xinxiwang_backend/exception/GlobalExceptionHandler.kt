@@ -7,6 +7,7 @@ import tools.jackson.databind.exc.UnrecognizedPropertyException
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.service.RequestMetadataRules
+import com.layababateam.xinxiwang_backend.service.WebCustomerServiceConflictException
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
@@ -240,6 +241,17 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(status)
             .contentType(MediaType.APPLICATION_JSON)
             .body(ApiResponse.error(ex.errorCode, ex.message))
+    }
+
+    @ExceptionHandler(WebCustomerServiceConflictException::class)
+    fun handleWebCustomerServiceConflict(
+        ex: WebCustomerServiceConflictException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<Nothing>> {
+        captureClientWarning(ex, request, "web_customer_service_conflict")
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(ApiResponse.error(ErrorCode.INVALID_PARAM, ex.message))
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
