@@ -23,7 +23,9 @@ data class CreateNodeRequest(
     val region: String,
 
     val enabled: Boolean = true,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val ossPublicEndpoint: String? = null,
+    val ossFailbackEndpoint: String? = null,
 )
 
 data class UpdateNodeRequest(
@@ -35,5 +37,7 @@ data class UpdateNodeRequest(
     @field:Pattern(regexp = "china|international", message = "地区只能是 china 或 international")
     val region: String? = null,
     val enabled: Boolean? = null,
-    val sortOrder: Int? = null
+    val sortOrder: Int? = null,
+    val ossPublicEndpoint: String? = null,
+    val ossFailbackEndpoint: String? = null,
 )
