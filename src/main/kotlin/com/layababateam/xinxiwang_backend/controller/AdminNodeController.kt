@@ -53,6 +53,8 @@ class AdminNodeController(
                 region = body.region,
                 enabled = body.enabled,
                 sortOrder = body.sortOrder,
+                ossPublicEndpoint = normalizeOptionalUrl(body.ossPublicEndpoint),
+                ossFailbackEndpoint = normalizeOptionalUrl(body.ossFailbackEndpoint),
             ),
         )
 
@@ -90,6 +92,8 @@ class AdminNodeController(
             region = body.region ?: existing.region,
             enabled = body.enabled ?: existing.enabled,
             sortOrder = body.sortOrder ?: existing.sortOrder,
+            ossPublicEndpoint = mergeOptionalUrl(body.ossPublicEndpoint, existing.ossPublicEndpoint),
+            ossFailbackEndpoint = mergeOptionalUrl(body.ossFailbackEndpoint, existing.ossFailbackEndpoint),
             updatedAt = System.currentTimeMillis(),
         )
         val saved = adminNodePort.saveNode(updated)
@@ -162,6 +166,17 @@ class AdminNodeController(
             trimmed.startsWith("http://") -> trimmed.replaceFirst("http://", "ws://")
             else -> trimmed
         }
+    }
+
+    private fun normalizeOptionalUrl(value: String?): String? {
+        return value
+            ?.trim()
+            ?.trimEnd('/')
+            ?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun mergeOptionalUrl(value: String?, existing: String?): String? {
+        return if (value == null) existing else normalizeOptionalUrl(value)
     }
 
     private fun publishCdnConfigSafely() {

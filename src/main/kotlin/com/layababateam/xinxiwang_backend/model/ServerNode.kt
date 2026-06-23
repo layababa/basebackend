@@ -23,4 +23,5 @@ data class ServerNode(
      * 的 aliyun.oss.endpoint-public 默认值。
      */
     val ossPublicEndpoint: String? = null,
+    val ossFailbackEndpoint: String? = null,
 )
