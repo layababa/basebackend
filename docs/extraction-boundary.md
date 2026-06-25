@@ -9,6 +9,8 @@
 - 低耦合 Spring 基础设施：Jackson 配置、安全过滤链、密码编码器、健康检查、缓存响应头过滤器、条件启用的 Sentry 异步异常上报
 - Sentry 上报工具：`SentryReporter` 支持 Redis 跨实例去重，不存在 Redis bean 时降级本地去重
 - 通用第三方配置入口：`PushDaConfig` 统一 `pushda.*` 配置与专用 RestTemplate
+- PushDa 专用 `RestTemplate` 默认带连接/读取超时上界
+- 通用推送展示文案：`PushNotificationText` 把 WebSocket 通知 payload 转为移动推送 title/body/deepLink
 - 通用 Mongo 契约：名片、反馈、举报模型和 repository
 - 可选复用功能契约：会议、群接龙、钱包币种配置、前端错误上报、实名认证、用户标签等 DTO/model/repository
 - 核心领域契约：版本规则、敏感词、Bot、好友、群申请、红包、贴纸、系统配置、用户封禁、提现、节点等 DTO/model/repository
