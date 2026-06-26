@@ -108,6 +108,19 @@ class WebCustomerServiceService(
         )
     }
 
+    fun defaultBootstrap(request: HttpServletRequest): WebCustomerServiceBootstrapResponse {
+        for (entry in entryRepository.findAllByOrderByCreatedAtDesc().filter { it.enabled }) {
+            try {
+                return bootstrap(entry.id.orEmpty(), request)
+            } catch (_: ForbiddenException) {
+                continue
+            } catch (_: NotFoundException) {
+                continue
+            }
+        }
+        throw NotFoundException("客服入口未配置")
+    }
+
     fun createSession(
         entryId: String,
         body: WebCustomerServiceCreateSessionRequest,

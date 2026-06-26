@@ -42,6 +42,8 @@
 - 后台音视频用量统计接口：`AdminAvUsageController` 通过音视频用量端口复用，TRTC 统计口径和会议段汇总仍由接入方实现
 - 后台消息扩散策略接口：`AdminMessageDeliveryPolicyController` 通过消息扩散策略端口复用，策略缓存、命中规则和投递执行仍由接入方实现
 - 后台节点管理接口：`AdminNodeController` 通过节点管理端口复用，节点持久化和 CDN 配置发布仍由接入方实现
+- OSS 节点地址规则：`AdminNodeOssEndpointRules` 统一校验主/备 OSS 根地址，允许空值，非空必须是 `http(s)` 根地址且不能包含 `/config/cdn.json`
+- CDN 配置 payload：`CdnConfigPayloadBuilder` 生成兼容 `cdn.json` 结构，并在顶层输出 `oss_url` / `oss_failback_url`；节点对象内不暴露 OSS 主备字段，实际发布仍由接入方执行
 - 后台监控配置接口：`AdminMonitoringController` 通过监控配置端口复用，配置持久化、缓存失效和后端 Sentry 重载仍由接入方实现
 - 后台媒体解密策略接口：`AdminMediaDecryptController` 通过媒体解密策略端口复用，策略命中规则、全局开关存储和缓存失效仍由接入方实现
 - 后台群消息 Signal Pull 配置接口：`AdminGroupMessageSignalController` 通过群消息 Signal 配置端口复用，系统配置读写和缓存失效仍由接入方实现
