@@ -70,10 +70,13 @@ xinxiwang.web-customer-service.visitor-token-secret=...
 
 - `GET /api/web-customer-service/widget.js?entryId={id}`
 - `GET /api/web-customer-service/public/entries/{entryId}/bootstrap`
+- `GET /api/web-customer-service/public/default-entry/bootstrap`
 - `POST /api/web-customer-service/public/entries/{entryId}/sessions`
 - `GET /api/web-customer-service/public/sessions/{sessionId}/messages?after={messageId}&size=50`
 - `POST /api/web-customer-service/public/sessions/{sessionId}/messages`
 - `POST /api/web-customer-service/public/sessions/{sessionId}/images`
+
+`default-entry/bootstrap` is for native or host-integrated clients that do not want to compile an entry ID into the app. It scans enabled entries in service order and returns the first entry allowed by the same Origin/Referer domain check. If no enabled entry is accessible, it returns 404.
 
 ### 后台 API
 

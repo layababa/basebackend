@@ -7,6 +7,7 @@ import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.UpdateNodeRequest
 import com.layababateam.xinxiwang_backend.model.ServerNode
 import com.layababateam.xinxiwang_backend.service.AdminNodePort
+import com.layababateam.xinxiwang_backend.service.AdminNodeOssEndpointRules
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
 import com.layababateam.xinxiwang_backend.service.UrlRules
 import jakarta.servlet.http.HttpServletRequest
@@ -53,8 +54,14 @@ class AdminNodeController(
                 region = body.region,
                 enabled = body.enabled,
                 sortOrder = body.sortOrder,
-                ossPublicEndpoint = normalizeOptionalUrl(body.ossPublicEndpoint),
-                ossFailbackEndpoint = normalizeOptionalUrl(body.ossFailbackEndpoint),
+                ossPublicEndpoint = AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
+                    body.ossPublicEndpoint,
+                    "OSS 主地址",
+                ),
+                ossFailbackEndpoint = AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
+                    body.ossFailbackEndpoint,
+                    "OSS 备用地址",
+                ),
             ),
         )
 
@@ -92,8 +99,16 @@ class AdminNodeController(
             region = body.region ?: existing.region,
             enabled = body.enabled ?: existing.enabled,
             sortOrder = body.sortOrder ?: existing.sortOrder,
-            ossPublicEndpoint = mergeOptionalUrl(body.ossPublicEndpoint, existing.ossPublicEndpoint),
-            ossFailbackEndpoint = mergeOptionalUrl(body.ossFailbackEndpoint, existing.ossFailbackEndpoint),
+            ossPublicEndpoint = mergeOptionalOssRoot(
+                body.ossPublicEndpoint,
+                existing.ossPublicEndpoint,
+                "OSS 主地址",
+            ),
+            ossFailbackEndpoint = mergeOptionalOssRoot(
+                body.ossFailbackEndpoint,
+                existing.ossFailbackEndpoint,
+                "OSS 备用地址",
+            ),
             updatedAt = System.currentTimeMillis(),
         )
         val saved = adminNodePort.saveNode(updated)
@@ -168,15 +183,8 @@ class AdminNodeController(
         }
     }
 
-    private fun normalizeOptionalUrl(value: String?): String? {
-        return value
-            ?.trim()
-            ?.trimEnd('/')
-            ?.takeIf { it.isNotEmpty() }
-    }
-
-    private fun mergeOptionalUrl(value: String?, existing: String?): String? {
-        return if (value == null) existing else normalizeOptionalUrl(value)
+    private fun mergeOptionalOssRoot(value: String?, existing: String?, label: String): String? {
+        return if (value == null) existing else AdminNodeOssEndpointRules.normalizeOptionalRootUrl(value, label)
     }
 
     private fun publishCdnConfigSafely() {

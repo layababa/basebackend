@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -84,6 +85,38 @@ class AdminNodeControllerOssEndpointTest {
         val saved = port.saved.single()
         assertNull(saved.ossPublicEndpoint)
         assertNull(saved.ossFailbackEndpoint)
+    }
+
+    @Test
+    fun createNodeRejectsInvalidOssEndpointRoots() {
+        val controller = AdminNodeController(FakeAdminNodePort(), NoopAuditLogPort)
+
+        assertFailsWith<com.layababateam.xinxiwang_backend.exception.BusinessException> {
+            controller.createNode(
+                request = adminRequest(),
+                body = CreateNodeRequest(
+                    name = "Singapore",
+                    appServerUrl = "https://sg.example.com/appserver",
+                    websocketUrl = "wss://sg.example.com/websocket",
+                    baseUrl = "https://sg.example.com",
+                    region = "international",
+                    ossPublicEndpoint = "ftp://oss.example.com",
+                ),
+            )
+        }
+        assertFailsWith<com.layababateam.xinxiwang_backend.exception.BusinessException> {
+            controller.createNode(
+                request = adminRequest(),
+                body = CreateNodeRequest(
+                    name = "Singapore",
+                    appServerUrl = "https://sg.example.com/appserver",
+                    websocketUrl = "wss://sg.example.com/websocket",
+                    baseUrl = "https://sg.example.com",
+                    region = "international",
+                    ossFailbackEndpoint = "https://oss.example.com/config/cdn.json",
+                ),
+            )
+        }
     }
 }
 
