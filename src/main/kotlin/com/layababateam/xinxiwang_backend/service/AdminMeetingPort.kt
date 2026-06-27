@@ -16,4 +16,8 @@ interface AdminMeetingPort {
     fun forceEndMeeting(meetingId: String)
 
     fun adminJoinMeeting(adminUserId: String, meetingId: String): MeetingJoinResponse
+
+    fun setVirtualParticipants(adminUserId: String, meetingId: String, count: Int): List<ParticipantDto> {
+        throw UnsupportedOperationException("Meeting virtual participants are not implemented by this AdminMeetingPort")
+    }
 }

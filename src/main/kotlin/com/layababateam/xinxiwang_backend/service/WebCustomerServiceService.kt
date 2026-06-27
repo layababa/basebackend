@@ -87,6 +87,13 @@ class WebCustomerServiceService(
         return toEntryResponse(updated)
     }
 
+    fun deleteEntry(id: String) {
+        if (!entryRepository.existsById(id)) {
+            throw NotFoundException("客服入口不存在")
+        }
+        entryRepository.deleteById(id)
+    }
+
     fun script(id: String, request: HttpServletRequest): WebCustomerServiceScriptResponse {
         entryById(id)
         val encoded = URLEncoder.encode(id, StandardCharsets.UTF_8)
