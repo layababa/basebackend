@@ -40,6 +40,10 @@ data class User(
     // ── 运营号 ──
     val isOperator: Boolean = false,
     @Indexed
+    val assignedCsUserId: String? = null,
+    @Indexed
+    val assignedCsQrCodeId: String? = null,
+    @Indexed
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null,
     val deletedReason: String? = null
