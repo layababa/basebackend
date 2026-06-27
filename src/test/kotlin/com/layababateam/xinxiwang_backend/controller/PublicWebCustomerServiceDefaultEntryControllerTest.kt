@@ -8,8 +8,6 @@ import com.layababateam.xinxiwang_backend.service.UploadPort
 import com.layababateam.xinxiwang_backend.service.WebCustomerServiceService
 import com.layababateam.xinxiwang_backend.service.WebCustomerServiceTokenService
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.data.mongodb.MongoDatabaseFactory
-import org.springframework.data.mongodb.core.MongoTemplate
 import java.lang.reflect.Proxy
 import java.util.Optional
 import kotlin.test.Test
@@ -60,7 +58,7 @@ private fun webCustomerServiceService(entries: List<WebCustomerServiceEntry>): W
         messageRepository = unsupportedProxy(WebCustomerServiceMessageRepository::class.java),
         tokenService = WebCustomerServiceTokenService(),
         uploadPort = unsupportedProxy(UploadPort::class.java),
-        mongoTemplate = mongoTemplate(),
+        mongoTemplate = unusedMongoTemplate(),
     )
 
 private fun entry(
@@ -92,11 +90,6 @@ private fun entryRepository(entries: List<WebCustomerServiceEntry>): WebCustomer
             else -> defaultValue(method.returnType)
         }
     } as WebCustomerServiceEntryRepository
-
-private fun mongoTemplate(): MongoTemplate {
-    val factory = unsupportedProxy(MongoDatabaseFactory::class.java)
-    return MongoTemplate(factory)
-}
 
 private fun request(origin: String): HttpServletRequest =
     Proxy.newProxyInstance(

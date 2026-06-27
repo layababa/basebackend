@@ -23,4 +23,8 @@ interface AdminGroupPort {
         id: String,
         body: Map<String, String>,
     ): ResponseEntity<ApiResponse<Nothing>>
+
+    fun setVirtualMemberCount(adminId: String, groupId: String, count: Int): List<Map<String, Any?>> {
+        throw UnsupportedOperationException("Group virtual members are not implemented by this AdminGroupPort")
+    }
 }

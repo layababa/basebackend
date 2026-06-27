@@ -2,8 +2,10 @@ package com.layababateam.xinxiwang_backend.controller
 
 import com.layababateam.xinxiwang_backend.config.RequireAdmin
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
+import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.service.AdminGroupPort
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -80,4 +82,44 @@ class AdminGroupController(
         @RequestBody body: Map<String, String>,
     ): ResponseEntity<ApiResponse<Nothing>> =
         adminGroupPort.transferOwner(request, id, body)
+
+    @RequireAdmin("ADMIN")
+    @PutMapping("/{id}/virtual-members")
+    fun setVirtualMembers(
+        request: HttpServletRequest,
+        @PathVariable id: String,
+        @Valid @RequestBody body: AdminSetVirtualCountRequest,
+    ): ResponseEntity<ApiResponse<Any>> =
+        try {
+            val adminId = request.getAttribute("adminId") as? String ?: "admin"
+            val members = adminGroupPort.setVirtualMemberCount(adminId, id, body.count)
+            val virtualCount = members.count(::isVirtualMember)
+            ResponseEntity.ok(
+                ApiResponse.ok(
+                    mapOf(
+                        "virtualMemberCount" to virtualCount,
+                        "realMemberCount" to members.size - virtualCount,
+                        "memberCount" to members.size,
+                        "members" to members,
+                    ),
+                    "虚拟成员数量已更新",
+                ),
+            )
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(
+                ApiResponse.error(ErrorCode.INVALID_PARAM, e.message ?: "虚拟成员数量更新失败"),
+            )
+        } catch (e: UnsupportedOperationException) {
+            ResponseEntity.status(503).body(
+                ApiResponse.error(ErrorCode.SERVICE_UNAVAILABLE, e.message),
+            )
+        }
+
+    private fun isVirtualMember(member: Map<String, Any?>): Boolean =
+        when (val value = member["isVirtual"] ?: member["is_virtual"]) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> value.equals("true", ignoreCase = true) || value == "1"
+            else -> false
+        }
 }

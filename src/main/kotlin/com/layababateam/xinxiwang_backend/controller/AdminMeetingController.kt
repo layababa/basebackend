@@ -10,10 +10,13 @@ import com.layababateam.xinxiwang_backend.dto.ParticipantDto
 import com.layababateam.xinxiwang_backend.service.AdminMeetingPort
 import com.layababateam.xinxiwang_backend.service.PaginationRules
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -100,6 +103,37 @@ class AdminMeetingController(
             ResponseEntity.status(404)
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND, e.message ?: "会议不存在或已结束"))
         }
+    }
+
+    @RequireAdmin("ADMIN")
+    @PutMapping("/{id}/virtual-participants")
+    fun setVirtualParticipants(
+        request: HttpServletRequest,
+        @PathVariable id: String,
+        @Valid @RequestBody body: AdminSetVirtualCountRequest,
+    ): ResponseEntity<ApiResponse<Any>> =
+        try {
+            val adminId = request.getAttribute("adminId") as? String ?: "admin"
+            val participants = adminMeetingPort.setVirtualParticipants(adminId, id, body.count)
+            ResponseEntity.ok(ApiResponse.ok(virtualParticipantsResponse(participants), "虚拟参会者数量已更新"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(
+                ApiResponse.error(ErrorCode.INVALID_PARAM, e.message ?: "虚拟参会者数量更新失败"),
+            )
+        } catch (e: UnsupportedOperationException) {
+            ResponseEntity.status(503).body(
+                ApiResponse.error(ErrorCode.SERVICE_UNAVAILABLE, e.message),
+            )
+        }
+
+    private fun virtualParticipantsResponse(participants: List<ParticipantDto>): Map<String, Any?> {
+        val virtualCount = participants.count { it.isVirtual }
+        return mapOf(
+            "virtualParticipantCount" to virtualCount,
+            "realParticipantCount" to participants.size - virtualCount,
+            "participantCount" to participants.size,
+            "participants" to participants,
+        )
     }
 
     private companion object {

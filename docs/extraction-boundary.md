@@ -109,3 +109,9 @@
 4. 公共代码迁入 SDK 后，接入方通过远程依赖接入，并删除本地重复源码，避免同包同名类冲突。
 5. 接入方统一使用 `main-SNAPSHOT` 远程依赖，SDK 变更合入 `main` 后由 JitPack 构建最新快照。
 6. 新增 SDK API 时优先保持向后兼容；确需破坏兼容时先同步更新所有接入方。
+
+## 0625 SDK safe extraction notes
+
+- Added reusable admin contracts for `PUT /api/admin/groups/{id}/virtual-members` and `PUT /api/admin/meetings/{id}/virtual-participants`; concrete group/meeting mutation logic remains in the integrating backend through `AdminGroupPort` and `AdminMeetingPort`.
+- Added reusable `DELETE /api/admin/web-customer-service/entries/{id}` handling through the shared Web customer service service/repository contract.
+- Kept xianyun CORS domains, project `application.properties`, and application-level index initialization out of the SDK; integrating projects must provide those deployment and persistence settings themselves.

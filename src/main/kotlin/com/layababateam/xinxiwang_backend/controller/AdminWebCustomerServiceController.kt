@@ -2,14 +2,17 @@ package com.layababateam.xinxiwang_backend.controller
 
 import com.layababateam.xinxiwang_backend.config.RequireAdmin
 import com.layababateam.xinxiwang_backend.dto.ApiResponse
+import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.WebCustomerServiceEntryRequest
 import com.layababateam.xinxiwang_backend.dto.WebCustomerServiceTextMessageRequest
+import com.layababateam.xinxiwang_backend.exception.NotFoundException
 import com.layababateam.xinxiwang_backend.model.WebCustomerServiceSessionStatus
 import com.layababateam.xinxiwang_backend.service.WebCustomerServiceService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -45,6 +48,17 @@ class AdminWebCustomerServiceController(
         @Valid @RequestBody body: WebCustomerServiceEntryRequest,
     ): ResponseEntity<ApiResponse<*>> =
         ResponseEntity.ok(ApiResponse.ok(service.updateEntry(id, body), "客服入口已更新"))
+
+    @RequireAdmin("ADMIN")
+    @DeleteMapping("/entries/{id}")
+    fun deleteEntry(@PathVariable id: String): ResponseEntity<ApiResponse<*>> =
+        try {
+            service.deleteEntry(id)
+            ResponseEntity.ok(ApiResponse.ok<Nothing>(message = "客服入口已删除"))
+        } catch (e: NotFoundException) {
+            ResponseEntity.status(404)
+                .body(ApiResponse.error<Nothing>(ErrorCode.NOT_FOUND, e.message))
+        }
 
     @RequireAdmin("ADMIN")
     @GetMapping("/entries/{id}/script")

@@ -66,6 +66,7 @@ dependencies {
     testImplementation 'tools.jackson.module:jackson-module-kotlin:3.0.4'
     // GlobalExceptionHandler 依赖的异常类型来自 spring-web；其异常处理路径调用 Sentry / Servlet。
     testImplementation 'org.springframework:spring-web:7.0.2'
+    testImplementation 'org.springframework.data:spring-data-mongodb:5.0.2'
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
     testImplementation 'io.sentry:sentry:8.12.0'
@@ -75,6 +76,7 @@ dependencies {
     // WS 心跳 pipeline 集成测试（EmbeddedChannel）+ ws_online_users gauge 测试运行期依赖。
     testImplementation 'io.netty:netty-all:4.2.10.Final'
     testImplementation 'io.micrometer:micrometer-core:1.16.1'
+    testRuntimeOnly 'org.mongodb:mongodb-driver-sync:5.6.2'
 }
 
 tasks.named('test') {
