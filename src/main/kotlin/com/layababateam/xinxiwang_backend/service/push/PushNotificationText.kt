@@ -8,6 +8,18 @@ object PushNotificationText {
         val customData: Map<String, Any> = emptyMap(),
     )
 
+    /** 聚合群消息推送文案的未读数展示上限，超过显示 "99+"。 */
+    const val AGGREGATED_COUNT_CAP = 99
+
+    /**
+     * 聚合群消息推送的正文。统一在 SDK 生成并封顶，
+     * 避免出现「你收到了130854条新消息」这类荒诞文案，也避免各 app 各自内联实现漂移。
+     */
+    fun aggregatedGroupMessageBody(count: Int): String {
+        val shown = if (count > AGGREGATED_COUNT_CAP) "${AGGREGATED_COUNT_CAP}+" else count.toString()
+        return "你收到了${shown}条新消息"
+    }
+
     fun from(type: String?, data: Map<*, *>?, appScheme: String? = null): Text? {
         if (type == null) return null
         return when (type) {
