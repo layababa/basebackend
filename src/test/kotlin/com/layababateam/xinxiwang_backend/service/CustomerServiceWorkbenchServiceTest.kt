@@ -89,6 +89,29 @@ class CustomerServiceWorkbenchServiceTest {
         assertNull(recorded)
         assertEquals(0, state.messages.size)
     }
+
+    @Test
+    fun `messages does not rewrite existing app entry when it already matches customer service context`() {
+        val entryId = CustomerServiceWorkbenchService.appEntryId("cs-1")
+        val existingEntry = appEntry(
+            id = entryId,
+            name = "Support 接待工作台",
+            seatAdminIds = listOf("cs-1"),
+            updatedAt = 200L,
+        )
+        val state = WorkbenchState(
+            users = linkedMapOf("cs-1" to user("cs-1", "cs01", "CS One", isOperator = true)),
+            accounts = linkedMapOf("account-1" to account("account-1", "cs-1")),
+            entries = linkedMapOf(entryId to existingEntry),
+            sessions = linkedMapOf("session-1" to session("session-1", entryId, "customer-1")),
+        )
+        val service = state.service()
+
+        service.messages(customerServiceUserId = "cs-1", sessionId = "session-1", before = null, size = 20)
+
+        assertEquals(0, state.entrySaveCount)
+        assertEquals(200L, state.entries[entryId]?.updatedAt)
+    }
 }
 
 private data class WorkbenchState(
@@ -98,6 +121,8 @@ private data class WorkbenchState(
     val sessions: MutableMap<String, WebCustomerServiceSession> = linkedMapOf(),
     val messages: MutableMap<String, WebCustomerServiceMessage> = linkedMapOf(),
 ) {
+    var entrySaveCount = 0
+
     fun service() = CustomerServiceWorkbenchService(
         accountRepository = accountRepository(),
         userRepository = userRepository(),
@@ -142,6 +167,7 @@ private data class WorkbenchState(
             when (method.name) {
                 "findById" -> Optional.ofNullable(entries[args?.firstOrNull() as String])
                 "save" -> {
+                    entrySaveCount += 1
                     val entry = args?.firstOrNull() as WebCustomerServiceEntry
                     entries[entry.id.orEmpty()] = entry
                     entry
@@ -153,6 +179,7 @@ private data class WorkbenchState(
     private fun sessionRepository(): WebCustomerServiceSessionRepository =
         proxy(WebCustomerServiceSessionRepository::class.java) { method, args ->
             when (method.name) {
+                "findById" -> Optional.ofNullable(sessions[args?.firstOrNull() as String])
                 "findFirstByEntryIdAndVisitorIdAndStatusNotOrderByLastMessageAtDesc" -> {
                     val entryId = args?.getOrNull(0) as String
                     val visitorId = args.getOrNull(1) as String
@@ -210,6 +237,34 @@ private fun account(id: String, userId: String) = CustomerServiceAccount(
     userId = userId,
     displayName = "Support",
     enabled = true,
+)
+
+private fun appEntry(
+    id: String,
+    name: String,
+    seatAdminIds: List<String>,
+    updatedAt: Long,
+) = WebCustomerServiceEntry(
+    id = id,
+    name = name,
+    enabled = true,
+    allowedDomains = listOf(CustomerServiceWorkbenchService.APP_ENTRY_ALLOWED_DOMAIN),
+    seatAdminIds = seatAdminIds,
+    welcomeMessage = "您好，请问有什么可以帮您？",
+    themeColor = "#2563eb",
+    createdBy = seatAdminIds.first(),
+    createdAt = 100L,
+    updatedAt = updatedAt,
+)
+
+private fun session(id: String, entryId: String, visitorId: String) = WebCustomerServiceSession(
+    id = id,
+    entryId = entryId,
+    visitorId = visitorId,
+    visitorName = "Alice",
+    lastMessageAt = 100L,
+    createdAt = 100L,
+    updatedAt = 100L,
 )
 
 private fun <T> proxy(type: Class<T>, handler: (java.lang.reflect.Method, Array<out Any?>?) -> Any?): T =

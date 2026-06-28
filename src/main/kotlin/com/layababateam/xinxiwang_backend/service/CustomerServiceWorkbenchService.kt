@@ -223,31 +223,49 @@ class CustomerServiceWorkbenchService(
     }
 
     private fun ensureAppEntry(user: User, account: CustomerServiceAccount): WebCustomerServiceEntry {
-        val now = System.currentTimeMillis()
-        val entryId = appEntryId(user.id.orEmpty())
+        val customerServiceUserId = user.id.orEmpty()
+        val entryId = appEntryId(customerServiceUserId)
         val displayName = WebCustomerServiceRules.trimToNull(account.displayName)
             ?: WebCustomerServiceRules.trimToNull(user.displayName)
             ?: user.username
+        val desiredName = "$displayName 接待工作台"
+        val desiredAllowedDomains = listOf(APP_ENTRY_ALLOWED_DOMAIN)
+        val desiredSeatAdminIds = listOf(customerServiceUserId)
         val existing = entryRepository.findById(entryId).getOrNull()
-        val entry = existing?.copy(
-            name = "$displayName 接待工作台",
-            enabled = true,
-            allowedDomains = listOf(APP_ENTRY_ALLOWED_DOMAIN),
-            seatAdminIds = listOf(user.id.orEmpty()),
-            updatedAt = now,
-        ) ?: WebCustomerServiceEntry(
-            id = entryId,
-            name = "$displayName 接待工作台",
-            enabled = true,
-            allowedDomains = listOf(APP_ENTRY_ALLOWED_DOMAIN),
-            seatAdminIds = listOf(user.id.orEmpty()),
-            welcomeMessage = "您好，请问有什么可以帮您？",
-            themeColor = "#2563eb",
-            createdBy = user.id.orEmpty(),
-            createdAt = now,
-            updatedAt = now,
+        if (existing != null) {
+            val needsUpdate = existing.name != desiredName ||
+                !existing.enabled ||
+                existing.allowedDomains != desiredAllowedDomains ||
+                existing.seatAdminIds != desiredSeatAdminIds
+            if (!needsUpdate) {
+                return existing
+            }
+            return entryRepository.save(
+                existing.copy(
+                    name = desiredName,
+                    enabled = true,
+                    allowedDomains = desiredAllowedDomains,
+                    seatAdminIds = desiredSeatAdminIds,
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        }
+
+        val now = System.currentTimeMillis()
+        return entryRepository.save(
+            WebCustomerServiceEntry(
+                id = entryId,
+                name = desiredName,
+                enabled = true,
+                allowedDomains = desiredAllowedDomains,
+                seatAdminIds = desiredSeatAdminIds,
+                welcomeMessage = "您好，请问有什么可以帮您？",
+                themeColor = "#2563eb",
+                createdBy = customerServiceUserId,
+                createdAt = now,
+                updatedAt = now,
+            ),
         )
-        return entryRepository.save(entry)
     }
 
     private fun requireOwnedSession(sessionId: String, entryId: String): WebCustomerServiceSession {
