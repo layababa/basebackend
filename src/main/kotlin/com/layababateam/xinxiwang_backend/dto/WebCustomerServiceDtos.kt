@@ -107,6 +107,15 @@ data class WebCustomerServiceTextMessageRequest(
     val content: String,
 )
 
+data class CustomerServiceWorkbenchProfileResponse(
+    val customerServiceUserId: String,
+    val username: String,
+    val displayName: String,
+    val avatarUrl: String,
+    val accountId: String,
+    val entry: WebCustomerServiceEntryResponse,
+)
+
 data class WebCustomerServiceScriptResponse(
     val scriptUrl: String,
     val scriptTag: String,

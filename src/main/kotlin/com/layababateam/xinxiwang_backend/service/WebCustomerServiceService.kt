@@ -465,7 +465,7 @@ class WebCustomerServiceService(
     private fun preview(contentType: WebCustomerServiceContentType, content: String): String =
         if (contentType == WebCustomerServiceContentType.IMAGE) "[图片]" else content.take(80)
 
-    private fun uploadCustomerServiceImage(file: MultipartFile, requestId: String?): String {
+    internal fun uploadCustomerServiceImage(file: MultipartFile, requestId: String?): String {
         if (file.isEmpty || file.size > IMAGE_MAX_BYTES) {
             throw BusinessException(ErrorCode.INVALID_PARAM, "图片不能为空且不能超过10MB")
         }
