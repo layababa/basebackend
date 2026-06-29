@@ -28,6 +28,9 @@ data class BotMessageSendResult(
 interface BotApiPort {
     fun getBotProfile(userId: String): BotApiProfile?
 
+    /** 给 BotAI 签发可用于 WebSocket auth 的普通用户 token；接入方可复用既有 token 存储。 */
+    fun issueBotWebSocketToken(userId: String): String? = null
+
     fun sendBotMessage(
         userId: String,
         conversationId: String,

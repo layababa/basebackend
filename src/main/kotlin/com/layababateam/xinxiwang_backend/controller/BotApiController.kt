@@ -51,6 +51,14 @@ class BotApiController(
         )
     }
 
+    @PostMapping("/ws-token")
+    fun issueWebSocketToken(request: HttpServletRequest): ResponseEntity<ApiResponse<*>> {
+        val userId = request.getAttribute(BotApiAuthAttributes.BOT_USER_ID_ATTR) as String
+        val token = botApiPort.issueBotWebSocketToken(userId)
+            ?: return ResponseEntity.status(404).body(ApiResponse.error<Any>(ErrorCode.NOT_FOUND, "Bot WebSocket token 不可用"))
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("token" to token)))
+    }
+
     @PostMapping("/sendMessage")
     fun sendMessage(
         request: HttpServletRequest,
