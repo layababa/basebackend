@@ -3,6 +3,7 @@
 本文面向**接入 basebackend 的后端服务**（如 `xianyun_backend`），说明如何把本 SDK 引入到一个 Spring Boot 4 / Kotlin 工程并正确跑起来。内容均以仓库真实代码为准。
 
 > 仅需快速了解 SDK 边界（哪些能力由 SDK 提供、哪些留在接入方）请看 [`extraction-boundary.md`](./extraction-boundary.md)。
+> AI 代聊接入请看 [`features/proxychat-sdk.md`](./features/proxychat-sdk.md)。
 
 ---
 
