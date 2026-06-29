@@ -31,7 +31,21 @@ class CdnConfigPayloadBuilder(
             val failbackRoot = firstUsableHttpRoot(sourceNode?.ossFailbackEndpoint, defaultOssFailbackEndpoint)
                 ?: primaryRoot
             payload["oss_url"] = configUrl(primaryRoot)
+            putCredentialPair(
+                payload = payload,
+                accessKeyIdField = "oss_access_key_id",
+                accessKeySecretField = "oss_access_key_secret",
+                accessKeyId = sourceNode?.ossAccessKeyId,
+                accessKeySecret = sourceNode?.ossAccessKeySecret,
+            )
             payload["oss_failback_url"] = configUrl(failbackRoot)
+            putCredentialPair(
+                payload = payload,
+                accessKeyIdField = "oss_failback_access_key_id",
+                accessKeySecretField = "oss_failback_access_key_secret",
+                accessKeyId = sourceNode?.ossFailbackAccessKeyId,
+                accessKeySecret = sourceNode?.ossFailbackAccessKeySecret,
+            )
         }
 
         return payload
@@ -57,4 +71,18 @@ class CdnConfigPayloadBuilder(
     }
 
     private fun configUrl(root: String): String = "${root.trimEnd('/')}/config/cdn.json"
+
+    private fun putCredentialPair(
+        payload: MutableMap<String, Any?>,
+        accessKeyIdField: String,
+        accessKeySecretField: String,
+        accessKeyId: String?,
+        accessKeySecret: String?,
+    ) {
+        val id = accessKeyId?.trim()?.takeIf { it.isNotBlank() }
+        val secret = accessKeySecret?.trim()?.takeIf { it.isNotBlank() }
+        if (id == null || secret == null) return
+        payload[accessKeyIdField] = id
+        payload[accessKeySecretField] = secret
+    }
 }

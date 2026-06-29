@@ -26,6 +26,10 @@ data class CreateNodeRequest(
     val sortOrder: Int = 0,
     val ossPublicEndpoint: String? = null,
     val ossFailbackEndpoint: String? = null,
+    val ossAccessKeyId: String? = null,
+    val ossAccessKeySecret: String? = null,
+    val ossFailbackAccessKeyId: String? = null,
+    val ossFailbackAccessKeySecret: String? = null,
 )
 
 data class UpdateNodeRequest(
@@ -40,4 +44,8 @@ data class UpdateNodeRequest(
     val sortOrder: Int? = null,
     val ossPublicEndpoint: String? = null,
     val ossFailbackEndpoint: String? = null,
+    val ossAccessKeyId: String? = null,
+    val ossAccessKeySecret: String? = null,
+    val ossFailbackAccessKeyId: String? = null,
+    val ossFailbackAccessKeySecret: String? = null,
 )
