@@ -3,15 +3,13 @@ package com.layababateam.xinxiwang_backend.netty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.layababateam.xinxiwang_backend.handler.MessageHandler
 import com.layababateam.xinxiwang_backend.metrics.WebSocketMetrics
-import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 import com.layababateam.xinxiwang_backend.config.MediaKeyRegistry
 import com.layababateam.xinxiwang_backend.proto.WsEnvelope
-import com.layababateam.xinxiwang_backend.repository.ClientVersionRuleRepository
 import com.layababateam.xinxiwang_backend.repository.DeviceSessionRepository
 import com.layababateam.xinxiwang_backend.service.AckRetryService
-import com.layababateam.xinxiwang_backend.service.ApkDownloadUrlResolver
 import com.layababateam.xinxiwang_backend.service.CallSessionAudit
 import com.layababateam.xinxiwang_backend.service.CallSessionManager
+import com.layababateam.xinxiwang_backend.service.ClientUpdatePolicyService
 import com.layababateam.xinxiwang_backend.service.MeetingService
 import com.layababateam.xinxiwang_backend.service.TrtcService
 import com.layababateam.xinxiwang_backend.service.PullLogCommandSender
@@ -50,7 +48,7 @@ class NettyWebSocketHandler(
     private val callSessionManager: CallSessionManager,
     private val meetingService: MeetingService,
     private val deviceSessionRepository: DeviceSessionRepository,
-    private val clientVersionRuleRepository: ClientVersionRuleRepository,
+    private val clientUpdatePolicyService: ClientUpdatePolicyService,
     private val wsMetrics: WebSocketMetrics,
     private val businessMetrics: com.layababateam.xinxiwang_backend.metrics.BusinessMetrics,
     private val wsResponseHelper: WsResponseHelper,
@@ -59,7 +57,6 @@ class NettyWebSocketHandler(
     private val mediaKeyRegistry: MediaKeyRegistry,
     private val callSessionAudit: CallSessionAudit,
     private val trtcService: TrtcService,
-    private val apkDownloadUrlResolver: ApkDownloadUrlResolver,
     @Value("\${rentmsg.ws.executor.auth.threads:16}") private val authThreads: Int,
     @Value("\${rentmsg.ws.executor.auth.queue-capacity:512}") private val authQueueCapacity: Int,
     @Value("\${rentmsg.ws.executor.send.threads:32}") private val sendThreads: Int,
@@ -467,23 +464,11 @@ class NettyWebSocketHandler(
             val effectivePlatform = platform ?: session?.platform ?: "unknown"
             val effectiveVersion = clientVersion ?: session?.clientVersion ?: "unknown"
             if (effectivePlatform != "unknown" && effectiveVersion != "unknown") {
-                val rule = clientVersionRuleRepository.findByPlatformAndEnabledTrue(effectivePlatform)
-                if (rule != null && ClientVersionRule.compareVersions(effectiveVersion, rule.minVersion) < 0) {
-                    val updateUrl = apkDownloadUrlResolver.resolve(
-                        ClientVersionRule.getUpdateUrl(effectivePlatform, rule.updateUrl)
-                    )
-                    sendJson(ctx, mapOf(
-                        "type" to "force_update",
-                        "message" to "您的客户端版本过低（$effectiveVersion），请更新到最新版本。",
-                        "data" to mapOf(
-                            "updateUrl" to updateUrl,
-                            "platform" to effectivePlatform,
-                            "currentVersion" to effectiveVersion,
-                            "minVersion" to rule.minVersion
-                        )
-                    ))
+                val decision = clientUpdatePolicyService.forceDecision(effectivePlatform, effectiveVersion)
+                if (decision != null) {
+                    sendJson(ctx, clientUpdatePolicyService.forceUpdatePayload(decision))
                     ctx.channel().close()
-                    log.info("Force-update: rejected auth for user {} on {} v{} (min={})", userId, effectivePlatform, effectiveVersion, rule.minVersion)
+                    log.info("Force-update: rejected auth for user {} on {} v{} (min={})", userId, effectivePlatform, effectiveVersion, decision.minVersion)
                     return
                 }
             }
