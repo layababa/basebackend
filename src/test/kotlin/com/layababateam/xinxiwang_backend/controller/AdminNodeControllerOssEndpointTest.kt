@@ -11,7 +11,6 @@ import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AdminNodeControllerOssEndpointTest {
@@ -81,7 +80,7 @@ class AdminNodeControllerOssEndpointTest {
     }
 
     @Test
-    fun updateNodeClearsBlankOssEndpoints() {
+    fun updateNodePreservesEndpointsWhenFieldsAreBlank() {
         val existing = serverNode(
             ossPublicEndpoint = "https://primary-bucket.oss-cn-hongkong.aliyuncs.com",
             ossFailbackEndpoint = "https://fallback-bucket.oss-cn-hongkong.aliyuncs.com",
@@ -107,12 +106,12 @@ class AdminNodeControllerOssEndpointTest {
         )
 
         val saved = port.saved.single()
-        assertNull(saved.ossPublicEndpoint)
-        assertNull(saved.ossFailbackEndpoint)
-        assertNull(saved.ossAccessKeyId)
-        assertNull(saved.ossAccessKeySecret)
-        assertNull(saved.ossFailbackAccessKeyId)
-        assertNull(saved.ossFailbackAccessKeySecret)
+        assertEquals("https://primary-bucket.oss-cn-hongkong.aliyuncs.com", saved.ossPublicEndpoint)
+        assertEquals("https://fallback-bucket.oss-cn-hongkong.aliyuncs.com", saved.ossFailbackEndpoint)
+        assertEquals("ENC:A256GCM:v1:k1:id", saved.ossAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:secret", saved.ossAccessKeySecret)
+        assertEquals("ENC:A256GCM:v1:k1:fb-id", saved.ossFailbackAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:fb-secret", saved.ossFailbackAccessKeySecret)
     }
 
     @Test

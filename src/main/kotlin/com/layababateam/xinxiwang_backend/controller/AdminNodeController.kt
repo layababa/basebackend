@@ -232,11 +232,11 @@ class AdminNodeController(
         AdminNodeOssEndpointRules.normalizeOptionalCredential(value)
 
     private fun mergeOptionalOssRoot(value: String?, existing: String?, label: String): String? {
-        return if (value == null) existing else normalizeOssRoot(value, label)
+        return if (value.isNullOrBlank()) existing else normalizeOssRoot(value, label)
     }
 
     private fun mergeOptionalCredential(value: String?, existing: String?): String? {
-        return if (value == null) existing else normalizeCredential(value)
+        return if (value.isNullOrBlank()) existing else normalizeCredential(value)
     }
 
     private fun publishCdnConfigSafely() {
