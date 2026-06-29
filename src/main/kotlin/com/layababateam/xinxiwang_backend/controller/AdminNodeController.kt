@@ -6,8 +6,8 @@ import com.layababateam.xinxiwang_backend.dto.CreateNodeRequest
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
 import com.layababateam.xinxiwang_backend.dto.UpdateNodeRequest
 import com.layababateam.xinxiwang_backend.model.ServerNode
-import com.layababateam.xinxiwang_backend.service.AdminNodePort
 import com.layababateam.xinxiwang_backend.service.AdminNodeOssEndpointRules
+import com.layababateam.xinxiwang_backend.service.AdminNodePort
 import com.layababateam.xinxiwang_backend.service.AuditLogPort
 import com.layababateam.xinxiwang_backend.service.UrlRules
 import jakarta.servlet.http.HttpServletRequest
@@ -45,6 +45,8 @@ class AdminNodeController(
     ): ResponseEntity<ApiResponse<ServerNode>> {
         val adminId = request.adminId()
         val adminUsername = request.adminUsername()
+        val ossFields = normalizedCreateOssFields(body)
+
         val node = adminNodePort.saveNode(
             ServerNode(
                 name = body.name,
@@ -54,14 +56,12 @@ class AdminNodeController(
                 region = body.region,
                 enabled = body.enabled,
                 sortOrder = body.sortOrder,
-                ossPublicEndpoint = AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
-                    body.ossPublicEndpoint,
-                    "OSS 主地址",
-                ),
-                ossFailbackEndpoint = AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
-                    body.ossFailbackEndpoint,
-                    "OSS 备用地址",
-                ),
+                ossPublicEndpoint = ossFields.publicEndpoint,
+                ossFailbackEndpoint = ossFields.failbackEndpoint,
+                ossAccessKeyId = ossFields.accessKeyId,
+                ossAccessKeySecret = ossFields.accessKeySecret,
+                ossFailbackAccessKeyId = ossFields.failbackAccessKeyId,
+                ossFailbackAccessKeySecret = ossFields.failbackAccessKeySecret,
             ),
         )
 
@@ -91,6 +91,8 @@ class AdminNodeController(
 
         val adminId = request.adminId()
         val adminUsername = request.adminUsername()
+        val ossFields = normalizedUpdateOssFields(body, existing)
+
         val updated = existing.copy(
             name = body.name ?: existing.name,
             appServerUrl = UrlRules.stripTrailingSlashOrNull(body.appServerUrl) ?: existing.appServerUrl,
@@ -99,16 +101,12 @@ class AdminNodeController(
             region = body.region ?: existing.region,
             enabled = body.enabled ?: existing.enabled,
             sortOrder = body.sortOrder ?: existing.sortOrder,
-            ossPublicEndpoint = mergeOptionalOssRoot(
-                body.ossPublicEndpoint,
-                existing.ossPublicEndpoint,
-                "OSS 主地址",
-            ),
-            ossFailbackEndpoint = mergeOptionalOssRoot(
-                body.ossFailbackEndpoint,
-                existing.ossFailbackEndpoint,
-                "OSS 备用地址",
-            ),
+            ossPublicEndpoint = ossFields.publicEndpoint,
+            ossFailbackEndpoint = ossFields.failbackEndpoint,
+            ossAccessKeyId = ossFields.accessKeyId,
+            ossAccessKeySecret = ossFields.accessKeySecret,
+            ossFailbackAccessKeyId = ossFields.failbackAccessKeyId,
+            ossFailbackAccessKeySecret = ossFields.failbackAccessKeySecret,
             updatedAt = System.currentTimeMillis(),
         )
         val saved = adminNodePort.saveNode(updated)
@@ -174,6 +172,50 @@ class AdminNodeController(
         return ResponseEntity.ok(ApiResponse.ok<Unit>(message = "CDN 配置已发布"))
     }
 
+    private fun normalizedCreateOssFields(body: CreateNodeRequest): OssFields {
+        val fields = OssFields(
+            publicEndpoint = normalizeOssRoot(body.ossPublicEndpoint, "Primary OSS endpoint"),
+            failbackEndpoint = normalizeOssRoot(body.ossFailbackEndpoint, "Failback OSS endpoint"),
+            accessKeyId = normalizeCredential(body.ossAccessKeyId),
+            accessKeySecret = normalizeCredential(body.ossAccessKeySecret),
+            failbackAccessKeyId = normalizeCredential(body.ossFailbackAccessKeyId),
+            failbackAccessKeySecret = normalizeCredential(body.ossFailbackAccessKeySecret),
+        )
+        validateOssFields(fields)
+        return fields
+    }
+
+    private fun normalizedUpdateOssFields(body: UpdateNodeRequest, existing: ServerNode): OssFields {
+        val fields = OssFields(
+            publicEndpoint = mergeOptionalOssRoot(body.ossPublicEndpoint, existing.ossPublicEndpoint, "Primary OSS endpoint"),
+            failbackEndpoint = mergeOptionalOssRoot(body.ossFailbackEndpoint, existing.ossFailbackEndpoint, "Failback OSS endpoint"),
+            accessKeyId = mergeOptionalCredential(body.ossAccessKeyId, existing.ossAccessKeyId),
+            accessKeySecret = mergeOptionalCredential(body.ossAccessKeySecret, existing.ossAccessKeySecret),
+            failbackAccessKeyId = mergeOptionalCredential(body.ossFailbackAccessKeyId, existing.ossFailbackAccessKeyId),
+            failbackAccessKeySecret = mergeOptionalCredential(
+                body.ossFailbackAccessKeySecret,
+                existing.ossFailbackAccessKeySecret,
+            ),
+        )
+        validateOssFields(fields)
+        return fields
+    }
+
+    private fun validateOssFields(fields: OssFields) {
+        AdminNodeOssEndpointRules.validateEndpointCredentialPair(
+            fields.publicEndpoint,
+            fields.accessKeyId,
+            fields.accessKeySecret,
+            "Primary OSS",
+        )
+        AdminNodeOssEndpointRules.validateEndpointCredentialPair(
+            fields.failbackEndpoint,
+            fields.failbackAccessKeyId,
+            fields.failbackAccessKeySecret,
+            "Failback OSS",
+        )
+    }
+
     private fun normalizeWsUrl(url: String): String {
         val trimmed = UrlRules.stripTrailingSlash(url)
         return when {
@@ -183,8 +225,18 @@ class AdminNodeController(
         }
     }
 
+    private fun normalizeOssRoot(value: String?, label: String): String? =
+        AdminNodeOssEndpointRules.normalizeOptionalRootUrl(value, label)
+
+    private fun normalizeCredential(value: String?): String? =
+        AdminNodeOssEndpointRules.normalizeOptionalCredential(value)
+
     private fun mergeOptionalOssRoot(value: String?, existing: String?, label: String): String? {
-        return if (value == null) existing else AdminNodeOssEndpointRules.normalizeOptionalRootUrl(value, label)
+        return if (value == null) existing else normalizeOssRoot(value, label)
+    }
+
+    private fun mergeOptionalCredential(value: String?, existing: String?): String? {
+        return if (value == null) existing else normalizeCredential(value)
     }
 
     private fun publishCdnConfigSafely() {
@@ -194,6 +246,15 @@ class AdminNodeController(
             log.error("自动发布 cdn.json 失败", e)
         }
     }
+
+    private data class OssFields(
+        val publicEndpoint: String?,
+        val failbackEndpoint: String?,
+        val accessKeyId: String?,
+        val accessKeySecret: String?,
+        val failbackAccessKeyId: String?,
+        val failbackAccessKeySecret: String?,
+    )
 
     private fun HttpServletRequest.adminId(): String = getAttribute("adminId") as String
 

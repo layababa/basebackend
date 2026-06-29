@@ -1,30 +1,57 @@
 package com.layababateam.xinxiwang_backend.service
 
+import com.layababateam.xinxiwang_backend.model.ServerNode
+import com.layababateam.xinxiwang_backend.repository.ServerNodeRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 /**
- * Simplified endpoint resolver for xianyun.
- *
- * xianyun's [com.layababateam.xinxiwang_backend.model.ServerNode] does not
- * expose an `ossPublicEndpoint` column, so we do not support per-node endpoint
- * overrides here. The current public OSS endpoint is read once from
- * configuration. When the configured endpoint is the xianyunimint accelerate
- * bucket host, media downloads are switched to the regional OSS direct host so
- * clients can still read media if the accelerate host has problems.
+ * Resolves the public OSS endpoints used when generating media URLs.
+ * Node-managed endpoints win; application properties remain the bootstrap
+ * fallback for empty node tables or nodes without OSS endpoint fields.
  */
 @Service
 class MediaEndpointResolver(
     @Value("\${aliyun.oss.endpoint-public}") private val fallbackEndpoint: String,
     @Value("\${aliyun.oss.endpoint-public-direct:}") private val directEndpoint: String = "",
+    private val serverNodeRepository: ServerNodeRepository,
 ) {
-    private val cached = resolvePublicEndpoint(fallbackEndpoint, directEndpoint)
+    @Volatile
+    private var cached = loadEndpoints()
 
-    fun currentOssPublicEndpoint(): String = cached
+    fun currentOssPublicEndpoint(): String = cached.publicEndpoint
+
+    fun currentOssFailbackEndpoint(): String = cached.failbackEndpoint
 
     fun refresh() {
-        // no-op: xianyun resolves the endpoint statically from configuration
+        cached = loadEndpoints()
     }
+
+    private fun loadEndpoints(): ResolvedEndpoints {
+        val configured = resolveConfiguredEndpoint()
+        val sourceNode = runCatching {
+            serverNodeRepository.findByEnabledTrueOrderBySortOrderAsc()
+        }.getOrDefault(emptyList())
+            .sortedWith(compareBy<ServerNode> { it.sortOrder }.thenBy { it.createdAt }.thenBy { it.id })
+            .firstOrNull()
+
+        val public = normalizeRoot(sourceNode?.ossPublicEndpoint)
+            ?: configured
+        val failback = normalizeRoot(sourceNode?.ossFailbackEndpoint)
+            ?: configured
+        return ResolvedEndpoints(public, failback)
+    }
+
+    private fun normalizeRoot(value: String?): String? =
+        value?.trim()?.trimEnd('/')?.takeIf { it.isNotBlank() }
+
+    private fun resolveConfiguredEndpoint(): String =
+        resolvePublicEndpoint(fallbackEndpoint, directEndpoint)
+
+    private data class ResolvedEndpoints(
+        val publicEndpoint: String,
+        val failbackEndpoint: String,
+    )
 
     companion object {
         fun resolvePublicEndpoint(fallbackEndpoint: String, directEndpoint: String): String {

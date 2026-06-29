@@ -30,25 +30,37 @@ class AdminNodeControllerOssEndpointTest {
                 region = "international",
                 enabled = true,
                 sortOrder = 7,
-                ossPublicEndpoint = " https://oss.example.com/ ",
-                ossFailbackEndpoint = "https://oss-fallback.example.com/",
+                ossPublicEndpoint = " https://primary-bucket.oss-cn-hongkong.aliyuncs.com/ ",
+                ossFailbackEndpoint = "https://fallback-bucket.oss-cn-hongkong.aliyuncs.com/",
+                ossAccessKeyId = " ENC:A256GCM:v1:k1:id ",
+                ossAccessKeySecret = " ENC:A256GCM:v1:k1:secret ",
+                ossFailbackAccessKeyId = "ENC:A256GCM:v1:k1:fb-id",
+                ossFailbackAccessKeySecret = "ENC:A256GCM:v1:k1:fb-secret",
             ),
         )
 
         assertEquals(200, response.statusCode.value())
         assertTrue(response.body!!.success)
-        assertEquals("https://oss.example.com", port.saved.single().ossPublicEndpoint)
+        assertEquals("https://primary-bucket.oss-cn-hongkong.aliyuncs.com", port.saved.single().ossPublicEndpoint)
         assertEquals(
-            "https://oss-fallback.example.com",
+            "https://fallback-bucket.oss-cn-hongkong.aliyuncs.com",
             port.saved.single().ossFailbackEndpoint,
         )
+        assertEquals("ENC:A256GCM:v1:k1:id", port.saved.single().ossAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:secret", port.saved.single().ossAccessKeySecret)
+        assertEquals("ENC:A256GCM:v1:k1:fb-id", port.saved.single().ossFailbackAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:fb-secret", port.saved.single().ossFailbackAccessKeySecret)
     }
 
     @Test
     fun updateNodePreservesEndpointsWhenFieldsAreMissing() {
         val existing = serverNode(
-            ossPublicEndpoint = "https://oss.example.com",
-            ossFailbackEndpoint = "https://oss-fallback.example.com",
+            ossPublicEndpoint = "https://primary-bucket.oss-cn-hongkong.aliyuncs.com",
+            ossFailbackEndpoint = "https://fallback-bucket.oss-cn-hongkong.aliyuncs.com",
+            ossAccessKeyId = "ENC:A256GCM:v1:k1:id",
+            ossAccessKeySecret = "ENC:A256GCM:v1:k1:secret",
+            ossFailbackAccessKeyId = "ENC:A256GCM:v1:k1:fb-id",
+            ossFailbackAccessKeySecret = "ENC:A256GCM:v1:k1:fb-secret",
         )
         val port = FakeAdminNodePort(existing)
         val controller = AdminNodeController(port, NoopAuditLogPort)
@@ -60,15 +72,23 @@ class AdminNodeControllerOssEndpointTest {
         )
 
         val saved = port.saved.single()
-        assertEquals("https://oss.example.com", saved.ossPublicEndpoint)
-        assertEquals("https://oss-fallback.example.com", saved.ossFailbackEndpoint)
+        assertEquals("https://primary-bucket.oss-cn-hongkong.aliyuncs.com", saved.ossPublicEndpoint)
+        assertEquals("https://fallback-bucket.oss-cn-hongkong.aliyuncs.com", saved.ossFailbackEndpoint)
+        assertEquals("ENC:A256GCM:v1:k1:id", saved.ossAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:secret", saved.ossAccessKeySecret)
+        assertEquals("ENC:A256GCM:v1:k1:fb-id", saved.ossFailbackAccessKeyId)
+        assertEquals("ENC:A256GCM:v1:k1:fb-secret", saved.ossFailbackAccessKeySecret)
     }
 
     @Test
     fun updateNodeClearsBlankOssEndpoints() {
         val existing = serverNode(
-            ossPublicEndpoint = "https://oss.example.com",
-            ossFailbackEndpoint = "https://oss-fallback.example.com",
+            ossPublicEndpoint = "https://primary-bucket.oss-cn-hongkong.aliyuncs.com",
+            ossFailbackEndpoint = "https://fallback-bucket.oss-cn-hongkong.aliyuncs.com",
+            ossAccessKeyId = "ENC:A256GCM:v1:k1:id",
+            ossAccessKeySecret = "ENC:A256GCM:v1:k1:secret",
+            ossFailbackAccessKeyId = "ENC:A256GCM:v1:k1:fb-id",
+            ossFailbackAccessKeySecret = "ENC:A256GCM:v1:k1:fb-secret",
         )
         val port = FakeAdminNodePort(existing)
         val controller = AdminNodeController(port, NoopAuditLogPort)
@@ -79,12 +99,20 @@ class AdminNodeControllerOssEndpointTest {
             body = UpdateNodeRequest(
                 ossPublicEndpoint = "",
                 ossFailbackEndpoint = "   ",
+                ossAccessKeyId = "",
+                ossAccessKeySecret = "   ",
+                ossFailbackAccessKeyId = "",
+                ossFailbackAccessKeySecret = "   ",
             ),
         )
 
         val saved = port.saved.single()
         assertNull(saved.ossPublicEndpoint)
         assertNull(saved.ossFailbackEndpoint)
+        assertNull(saved.ossAccessKeyId)
+        assertNull(saved.ossAccessKeySecret)
+        assertNull(saved.ossFailbackAccessKeyId)
+        assertNull(saved.ossFailbackAccessKeySecret)
     }
 
     @Test
@@ -100,7 +128,7 @@ class AdminNodeControllerOssEndpointTest {
                     websocketUrl = "wss://sg.example.com/websocket",
                     baseUrl = "https://sg.example.com",
                     region = "international",
-                    ossPublicEndpoint = "ftp://oss.example.com",
+                    ossPublicEndpoint = "ftp://primary-bucket.oss-cn-hongkong.aliyuncs.com",
                 ),
             )
         }
@@ -113,7 +141,40 @@ class AdminNodeControllerOssEndpointTest {
                     websocketUrl = "wss://sg.example.com/websocket",
                     baseUrl = "https://sg.example.com",
                     region = "international",
-                    ossFailbackEndpoint = "https://oss.example.com/config/cdn.json",
+                    ossFailbackEndpoint = "https://primary-bucket.oss-cn-hongkong.aliyuncs.com/config/cdn.json",
+                ),
+            )
+        }
+        assertFailsWith<com.layababateam.xinxiwang_backend.exception.BusinessException> {
+            controller.createNode(
+                request = adminRequest(),
+                body = CreateNodeRequest(
+                    name = "Singapore",
+                    appServerUrl = "https://sg.example.com/appserver",
+                    websocketUrl = "wss://sg.example.com/websocket",
+                    baseUrl = "https://sg.example.com",
+                    region = "international",
+                    ossPublicEndpoint = "https://cdn.example.com",
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun createNodeRejectsPartialOssCredentialPairs() {
+        val controller = AdminNodeController(FakeAdminNodePort(), NoopAuditLogPort)
+
+        assertFailsWith<com.layababateam.xinxiwang_backend.exception.BusinessException> {
+            controller.createNode(
+                request = adminRequest(),
+                body = CreateNodeRequest(
+                    name = "Singapore",
+                    appServerUrl = "https://sg.example.com/appserver",
+                    websocketUrl = "wss://sg.example.com/websocket",
+                    baseUrl = "https://sg.example.com",
+                    region = "international",
+                    ossPublicEndpoint = "https://primary-bucket.oss-cn-hongkong.aliyuncs.com",
+                    ossAccessKeyId = "ENC:A256GCM:v1:k1:id",
                 ),
             )
         }
@@ -123,6 +184,10 @@ class AdminNodeControllerOssEndpointTest {
 private fun serverNode(
     ossPublicEndpoint: String? = null,
     ossFailbackEndpoint: String? = null,
+    ossAccessKeyId: String? = null,
+    ossAccessKeySecret: String? = null,
+    ossFailbackAccessKeyId: String? = null,
+    ossFailbackAccessKeySecret: String? = null,
 ): ServerNode = ServerNode(
     id = "node-1",
     name = "Node",
@@ -132,6 +197,10 @@ private fun serverNode(
     region = "international",
     ossPublicEndpoint = ossPublicEndpoint,
     ossFailbackEndpoint = ossFailbackEndpoint,
+    ossAccessKeyId = ossAccessKeyId,
+    ossAccessKeySecret = ossAccessKeySecret,
+    ossFailbackAccessKeyId = ossFailbackAccessKeyId,
+    ossFailbackAccessKeySecret = ossFailbackAccessKeySecret,
 )
 
 private class FakeAdminNodePort(initial: ServerNode? = null) : AdminNodePort {
