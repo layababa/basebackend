@@ -1,40 +1,73 @@
 package com.layababateam.xinxiwang_backend.service
 
-import com.layababateam.xinxiwang_backend.model.ClientUpdateUrlDefaults
+import com.layababateam.xinxiwang_backend.model.ClientVersionRule
 
 /**
- * 客户端版本纯规则。
+ * Client version helpers for update policy decisions.
  *
- * SDK 只处理版本比较和更新地址兜底；接入方负责版本记录的存储、
- * 平台白名单和具体强更策略。
+ * Versions are ordered by semantic segments first, then by the build suffix
+ * after '+'. Specific-version rules without a build suffix match all builds
+ * for that semantic version.
  */
 object ClientVersionRules {
-    val supportedPlatforms: Set<String> = setOf("ios", "android", "windows", "macos")
+    val supportedPlatforms: Set<String> = setOf("ios", "ipados", "android", "windows", "macos")
 
-    fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String {
-        StringValueRules.nonBlank(customUrl)?.let { return it }
-        return if (platform == IOS_PLATFORM) defaults.iosAppStoreUrl else defaults.defaultUrl
-    }
+    fun resolveUpdateUrl(platform: String, customUrl: String?): String =
+        ClientVersionRule.getUpdateUrl(platform, customUrl)
 
     fun normalizePlatform(platform: String?): String? =
-        StringValueRules.lowerNonBlank(platform)?.takeIf { it in supportedPlatforms }
+        nonBlank(platform)?.lowercase()?.takeIf { it in supportedPlatforms }
 
     fun isSupportedPlatform(platform: String?): Boolean =
         normalizePlatform(platform) != null
 
-    fun compareVersions(v1: String, v2: String): Int =
-        buildNumber(v1).compareTo(buildNumber(v2))
+    fun compareVersions(v1: String, v2: String): Int {
+        val left = ParsedVersion.parse(v1)
+        val right = ParsedVersion.parse(v2)
+        val maxSegments = maxOf(left.core.size, right.core.size)
+        for (index in 0 until maxSegments) {
+            val cmp = left.core.getOrElse(index) { 0 }.compareTo(right.core.getOrElse(index) { 0 })
+            if (cmp != 0) return cmp
+        }
+        return left.build.compareTo(right.build)
+    }
+
+    fun specificVersionMatches(current: String, target: String): Boolean {
+        val left = ParsedVersion.parse(current)
+        val right = ParsedVersion.parse(target)
+        val maxSegments = maxOf(left.core.size, right.core.size)
+        for (index in 0 until maxSegments) {
+            if (left.core.getOrElse(index) { 0 } != right.core.getOrElse(index) { 0 }) return false
+        }
+        return if (target.trim().contains("+")) left.build == right.build else true
+    }
 
     fun versionInRange(version: String, minVersion: String?, maxVersion: String?): Boolean {
-        val min = StringValueRules.nonBlank(minVersion)
-        val max = StringValueRules.nonBlank(maxVersion)
+        val min = nonBlank(minVersion)
+        val max = nonBlank(maxVersion)
         if (min != null && compareVersions(version, min) < 0) return false
         if (max != null && compareVersions(version, max) > 0) return false
         return true
     }
 
-    private fun buildNumber(version: String): Int =
-        version.split("+", limit = 2).getOrNull(1)?.toIntOrNull() ?: 0
+    private fun nonBlank(value: String?): String? =
+        value?.trim()?.takeIf { it.isNotEmpty() }
 
-    private const val IOS_PLATFORM = "ios"
+    private data class ParsedVersion(
+        val core: List<Int>,
+        val build: Int,
+    ) {
+        companion object {
+            fun parse(value: String): ParsedVersion {
+                val parts = value.trim().split("+", limit = 2)
+                val core = parts.firstOrNull()
+                    ?.split(".")
+                    ?.map { segment -> segment.takeWhile { it.isDigit() }.toIntOrNull() ?: 0 }
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: listOf(0)
+                val build = parts.getOrNull(1)?.takeWhile { it.isDigit() }?.toIntOrNull() ?: 0
+                return ParsedVersion(core, build)
+            }
+        }
+    }
 }

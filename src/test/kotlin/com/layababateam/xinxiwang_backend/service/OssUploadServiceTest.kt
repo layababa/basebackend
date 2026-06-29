@@ -25,6 +25,7 @@ class OssUploadServiceTest {
             endpointResolver = MediaEndpointResolver(
                 fallbackEndpoint = "https://oss.example.com/",
                 directEndpoint = "",
+                serverNodeRepository = emptyServerNodeRepository(),
             ),
             mediaKeyRegistry = MediaKeyRegistry("k1:not-used", "k1", "test"),
             mediaProxyTokenService = MediaProxyTokenService("secret"),

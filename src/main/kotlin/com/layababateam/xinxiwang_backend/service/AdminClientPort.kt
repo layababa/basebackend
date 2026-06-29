@@ -1,5 +1,7 @@
 package com.layababateam.xinxiwang_backend.service
 
+import com.fasterxml.jackson.annotation.JsonAlias
+
 /**
  * 后台客户端管理端口。
  *
@@ -27,9 +29,17 @@ interface AdminClientPort {
 
 data class ForceUpdateRuleRequest(
     val platform: String,
-    val minVersion: String,
+    val minVersion: String = "",
+    @JsonAlias("less_than_version")
+    val lessThanVersion: String? = null,
+    @JsonAlias("specific_versions")
+    val specificVersions: List<String>? = null,
     val enabled: Boolean = true,
     val updateUrl: String? = null,
+    @JsonAlias("force_update")
+    val forceUpdate: Boolean = true,
+    @JsonAlias("in_app_update")
+    val inAppUpdate: Boolean = true,
 )
 
 data class AppVersionUpdateRequest(
