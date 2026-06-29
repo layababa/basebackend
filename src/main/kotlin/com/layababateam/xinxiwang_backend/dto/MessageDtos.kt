@@ -1,5 +1,6 @@
 package com.layababateam.xinxiwang_backend.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -16,8 +17,8 @@ data class SendMessageRequest(
     val content: String,
 
     @field:Min(value = 0, message = "內容類型最小為 0")
-    @field:Max(value = 17, message = "內容類型最大為 17")
-    val contentType: Int = 0   // 0=text, 1=image, 2=voice, 3=video, 4=file, 5=red_packet, 8=sticker, 10=system, 11=transfer, 12=call, 13=business_card, 14=group_card, 16=meeting, 17=markdown（与 model/Enums.kt ContentType 对齐）
+    @field:Max(value = 13, message = "內容類型最大為 13")
+    val contentType: Int = 0   // 0=text, 1=image, 2=voice, 3=video, 4=file, 5=red_packet, 10=system, 11=transfer, 12=call, 13=business_card
 )
 
 data class MessageDto(
@@ -29,6 +30,7 @@ data class MessageDto(
     val contentType: Int,
     val content: String,
     val seqId: Long,
+    @get:JsonProperty("isRecalled")
     val isRecalled: Boolean = false,
     val mentions: List<String> = emptyList(),
     val createdAt: Long,
@@ -49,7 +51,9 @@ data class ReplyToDto(
     val senderId: String,
     val senderName: String? = null,
     val content: String,
-    val contentType: Int = 0
+    val contentType: Int = 0,
+    @get:JsonProperty("isRecalled")
+    val isRecalled: Boolean = false
 )
 
 // ========== 会话相关 ==========
@@ -65,6 +69,8 @@ data class ConversationDto(
     val lastMessageContentType: Int = 0,
     val lastMessageSenderId: String? = null,
     val lastMessageTime: Long? = null,
+    /** 群聊列表预览：最后一条消息发送者显示名（与 lastMessage* 一并由服务端下发） */
+    val lastMessageSenderName: String? = null,
     val unreadCount: Long = 0,
     val readSeqId: Long = 0,
     val pinned: Boolean = false,
@@ -93,6 +99,10 @@ data class ConversationDto(
     // ── 置顶消息（最多 5 条）──
     val pinnedMessages: List<PinnedMessageDto> = emptyList(),
 
+    // ── 服务端最大 seqId（用于客户端判断是否需要同步）──
+    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+    val serverMaxSeqId: Long? = null,
+
     // ── 请求方当前设备的独立已读位点（仅在 ws session 能识别 deviceId 时填充）──
     // 新客户端用它替代 readSeqId 判断未读，旧客户端反序列化会忽略
     @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
@@ -118,7 +128,10 @@ data class UserSummaryDto(
     val avatarUrl: String,
     val gender: Int,
     val bio: String,
-    val isBot: Boolean = false
+    @get:JsonProperty("isBot")
+    val isBot: Boolean = false,
+    @get:JsonProperty("isOperator")
+    val isOperator: Boolean = false
 )
 
 data class FriendRequestSendDto(
@@ -129,6 +142,7 @@ data class FriendRequestSendDto(
     val message: String = "",
 
     val fromGroupId: String? = null,
+
     val sourceCardMessageId: String? = null
 )
 
@@ -168,7 +182,9 @@ data class FriendRequestDto(
     val message: String,
     val status: Int,
     val createdAt: Long,
-    val updatedAt: Long = 0
+    val updatedAt: Long = 0,
+    @get:JsonProperty("isOutgoing")
+    val isOutgoing: Boolean = false
 )
 
 data class FriendDto(

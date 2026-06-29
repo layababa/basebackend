@@ -33,7 +33,10 @@ dependencies {
     compileOnly 'io.micrometer:micrometer-core:1.16.1'
     compileOnly 'io.lettuce:lettuce-core:6.8.2.RELEASE'
     compileOnly 'io.netty:netty-all:4.2.10.Final'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.20.2'
+    compileOnly 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.2'
     compileOnly 'org.apache.poi:poi-ooxml:5.3.0'
+    compileOnly 'io.github.resilience4j:resilience4j-annotations:2.3.0'
     compileOnly 'org.springframework:spring-aop:7.0.2'
     compileOnly 'org.springframework:spring-context:7.0.2'
     compileOnly 'org.springframework:spring-core:7.0.2'
@@ -53,7 +56,14 @@ dependencies {
     compileOnly 'org.mongodb:mongodb-driver-sync:5.6.2'
     compileOnly platform('software.amazon.awssdk:bom:2.42.5')
     compileOnly 'software.amazon.awssdk:s3'
+    compileOnly 'software.amazon.awssdk:sts'
+    compileOnly files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.aliyun/aliyun-java-sdk-core/4.7.2/37073cd824f47b52f500ac3e62a75eab40eb398f/aliyun-java-sdk-core-4.7.2.jar')
+    compileOnly files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.aliyun/aliyun-java-sdk-dm/3.3.2/40b87aa23290d4a32c9fc3ef1173024463a7ea65/aliyun-java-sdk-dm-3.3.2.jar')
     compileOnly 'com.aliyun.oss:aliyun-sdk-oss:3.18.2'
+    compileOnly 'net.coobird:thumbnailator:0.4.21'
+    compileOnly 'com.eatthepath:pushy:0.15.4'
+    compileOnly files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.tencentcloudapi/tencentcloud-sdk-java-asr/3.1.1411/cbe0d1055d7663a4235ee55e0788b61ad58f272c/tencentcloud-sdk-java-asr-3.1.1411.jar')
+    compileOnly files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.tencentcloudapi/tencentcloud-sdk-java-common/3.1.1411/31d3bc0254a53975b7a42cfda509ff007e0187ac/tencentcloud-sdk-java-common-3.1.1411.jar')
 
     // --- 测试基座（T3.5 / T4.4）---
     // SDK 主源码全 compileOnly，test 源集需把被测类真正用到的运行期依赖补齐。
@@ -64,9 +74,26 @@ dependencies {
     // 需要实例化 JsonMapper 并反序列化 Kotlin data class（缺 kotlin module 则复现 Kotlin data class 500）。
     testImplementation 'tools.jackson.core:jackson-databind:3.0.4'
     testImplementation 'tools.jackson.module:jackson-module-kotlin:3.0.4'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.20.2'
+    testImplementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.2'
     // GlobalExceptionHandler 依赖的异常类型来自 spring-web；其异常处理路径调用 Sentry / Servlet。
     testImplementation 'org.springframework:spring-web:7.0.2'
+    testImplementation 'org.springframework:spring-webmvc:7.0.2'
+    testImplementation 'org.springframework.amqp:spring-rabbit:4.0.2'
+    testImplementation 'org.springframework:spring-messaging:7.0.5'
     testImplementation 'org.springframework.data:spring-data-mongodb:5.0.2'
+    testImplementation 'org.springframework.data:spring-data-redis:4.0.2'
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.aliyun/aliyun-java-sdk-core/4.7.2/37073cd824f47b52f500ac3e62a75eab40eb398f/aliyun-java-sdk-core-4.7.2.jar')
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.aliyun/aliyun-java-sdk-dm/3.3.2/40b87aa23290d4a32c9fc3ef1173024463a7ea65/aliyun-java-sdk-dm-3.3.2.jar')
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.aliyun.oss/aliyun-sdk-oss/3.18.2/a9dba40d9ca97edd541abecaff2de8be6f2690a6/aliyun-sdk-oss-3.18.2.jar')
+    testImplementation 'net.coobird:thumbnailator:0.4.21'
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.tencentcloudapi/tencentcloud-sdk-java-asr/3.1.1411/cbe0d1055d7663a4235ee55e0788b61ad58f272c/tencentcloud-sdk-java-asr-3.1.1411.jar')
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/com.tencentcloudapi/tencentcloud-sdk-java-common/3.1.1411/31d3bc0254a53975b7a42cfda509ff007e0187ac/tencentcloud-sdk-java-common-3.1.1411.jar')
+    testImplementation platform('software.amazon.awssdk:bom:2.42.5')
+    testImplementation 'software.amazon.awssdk:s3'
+    testImplementation 'software.amazon.awssdk:sts'
+    testImplementation files('D:/layababa/IM-help/apk-build-resources/cache/packages/gradle/backend/caches/modules-2/files-2.1/io.github.resilience4j/resilience4j-annotations/2.3.0/c0dc3cfe04b88e65ee2dfb261a94ce2fbce70c65/resilience4j-annotations-2.3.0.jar')
+    testImplementation 'com.eatthepath:pushy:0.15.4'
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
     testImplementation 'io.sentry:sentry:8.12.0'

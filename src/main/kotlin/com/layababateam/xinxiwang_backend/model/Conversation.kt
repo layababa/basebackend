@@ -14,7 +14,6 @@ data class Conversation(
     val type: Int = 0,                         // 參見 ConversationType: 0=私聊, 1=群聊, 2=特殊私聊
     @Indexed
     val members: List<String> = emptyList(),    // 参与者 UID 列表（Multikey Index）
-    val virtualMembers: List<VirtualGroupMember> = emptyList(),
     val lastMessageId: String? = null,
     val lastMessageContent: String? = null,
     val lastMessageContentType: Int = 0,
@@ -52,15 +51,11 @@ data class Conversation(
     val announcementUpdatedBy: String? = null,
 
     // ── 置顶消息（最多 5 条，按 pinnedAt 降序，最新在前）──
-    val pinnedMessages: List<PinnedMessage> = emptyList()
-)
+    val pinnedMessages: List<PinnedMessage> = emptyList(),
 
-data class VirtualGroupMember(
-    val id: String,
-    val displayName: String,
-    val avatarUrl: String? = null,
-    val addedBy: String,
-    val addedAt: Long = System.currentTimeMillis(),
+    // ── seqId 校准标记（P0-S6）──
+    // true 表示该会话的 Redis seqId 已与 MongoDB 校准，多实例安全
+    val seqCalibrated: Boolean = false
 )
 
 data class PinnedMessage(
