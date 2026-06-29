@@ -83,6 +83,7 @@ class RentmsgMediaCompatibilityTest {
         val endpointResolver = MediaEndpointResolver(
             fallbackEndpoint = "https://download.example.com/",
             directEndpoint = "",
+            serverNodeRepository = emptyServerNodeRepository(),
         )
         val resolver = ApkDownloadUrlResolver(endpointResolver, bucket = "rentmsg-hk")
 

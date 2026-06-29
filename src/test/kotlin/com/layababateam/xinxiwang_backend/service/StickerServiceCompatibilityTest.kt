@@ -19,7 +19,11 @@ class StickerServiceCompatibilityTest {
         val service = StickerService(
             stickerRepository = stickerRepository(existing),
             ossService = OssService(ossProxy(), ossProxy(), ossProxy(), "rentmsg", "debug-logs/"),
-            endpointResolver = MediaEndpointResolver("https://cdn.example.com", ""),
+            endpointResolver = MediaEndpointResolver(
+                fallbackEndpoint = "https://cdn.example.com",
+                directEndpoint = "",
+                serverNodeRepository = emptyServerNodeRepository(),
+            ),
         )
 
         assertEquals(existing, service.saveFavoriteSticker("u1", existing.originalUrl))

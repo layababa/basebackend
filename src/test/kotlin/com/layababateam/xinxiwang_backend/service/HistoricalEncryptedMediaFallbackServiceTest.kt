@@ -32,6 +32,7 @@ class HistoricalEncryptedMediaFallbackServiceTest {
             endpointResolver = MediaEndpointResolver(
                 fallbackEndpoint = "https://rentmsg-hk.oss-accelerate.aliyuncs.com",
                 directEndpoint = "",
+                serverNodeRepository = emptyServerNodeRepository(),
             ),
             mediaObjectRepository = mediaObjectRepository(),
             objectMapper = objectMapper,
