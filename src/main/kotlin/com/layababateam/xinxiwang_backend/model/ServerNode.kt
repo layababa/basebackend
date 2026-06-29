@@ -24,4 +24,8 @@ data class ServerNode(
      */
     val ossPublicEndpoint: String? = null,
     val ossFailbackEndpoint: String? = null,
+    val ossAccessKeyId: String? = null,
+    val ossAccessKeySecret: String? = null,
+    val ossFailbackAccessKeyId: String? = null,
+    val ossFailbackAccessKeySecret: String? = null,
 )

@@ -9,24 +9,30 @@ import kotlin.test.assertNull
 class AdminNodeOssEndpointRulesTest {
     @Test
     fun normalizesBlankAndTrailingSlash() {
-        assertNull(AdminNodeOssEndpointRules.normalizeOptionalRootUrl(null, "OSS 主地址"))
-        assertNull(AdminNodeOssEndpointRules.normalizeOptionalRootUrl("   ", "OSS 主地址"))
+        assertNull(AdminNodeOssEndpointRules.normalizeOptionalRootUrl(null, "OSS main endpoint"))
+        assertNull(AdminNodeOssEndpointRules.normalizeOptionalRootUrl("   ", "OSS main endpoint"))
         assertEquals(
-            "https://oss.example.com",
-            AdminNodeOssEndpointRules.normalizeOptionalRootUrl(" https://oss.example.com/// ", "OSS 主地址"),
+            "https://main-bucket.oss-cn-hongkong.aliyuncs.com",
+            AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
+                " https://main-bucket.oss-cn-hongkong.aliyuncs.com/// ",
+                "OSS main endpoint",
+            ),
         )
     }
 
     @Test
-    fun rejectsNonHttpAndConfigJsonUrls() {
+    fun rejectsNonHttpConfigJsonAndCustomDomainUrls() {
         assertFailsWith<BusinessException> {
-            AdminNodeOssEndpointRules.normalizeOptionalRootUrl("ftp://oss.example.com", "OSS 主地址")
+            AdminNodeOssEndpointRules.normalizeOptionalRootUrl("ftp://oss.example.com", "OSS main endpoint")
         }
         assertFailsWith<BusinessException> {
             AdminNodeOssEndpointRules.normalizeOptionalRootUrl(
-                "https://oss.example.com/config/cdn.json",
-                "OSS 主地址",
+                "https://main-bucket.oss-cn-hongkong.aliyuncs.com/config/cdn.json",
+                "OSS main endpoint",
             )
+        }
+        assertFailsWith<BusinessException> {
+            AdminNodeOssEndpointRules.normalizeOptionalRootUrl("https://media.example.com", "OSS main endpoint")
         }
     }
 }
