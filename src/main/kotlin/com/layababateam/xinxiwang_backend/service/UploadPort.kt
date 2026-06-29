@@ -16,7 +16,7 @@ interface UploadPort {
 
     fun finalizeEncrypted(body: Map<String, Any>, userId: String?): UploadResponse
 
-    fun presignDirectUpload(body: Map<String, String>): UploadResponse
+    fun presignDirectUpload(body: Map<String, Any>): UploadResponse
 }
 
 data class UploadResponse(

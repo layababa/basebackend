@@ -6,17 +6,19 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.sts.StsClient
 
-@Deprecated("Replaced by OssService. Delete after OSS stability confirmed.")
+@Deprecated("Replaced by OssConfig. Delete after OSS stability confirmed.")
 @Configuration
 @ConditionalOnProperty(
-    name = ["xinxiwang.legacy.s3.enabled"],
+    name = ["rentmsg.legacy.s3.enabled"],
     havingValue = "true",
     matchIfMissing = false,
 )
 class S3Config(
-    @Value("\${media.region:ap-southeast-1}") private val region: String,
+    @Value("\${media.region:ap-southeast-1}") private val region: String
 ) {
     @Bean
     fun s3Client(): S3Client = S3Client.builder()
@@ -25,6 +27,23 @@ class S3Config(
 
     @Bean
     fun s3Presigner(): S3Presigner = S3Presigner.builder()
+        .region(Region.of(region))
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .accelerateModeEnabled(true)
+                .build()
+        )
+        .build()
+
+    /** 不启用 Transfer Acceleration 的 presigner，用于生成下载链接。
+     *  避免 bucket 未开启 Acceleration 时预签名 GET URL 返回 InvalidRequest。 */
+    @Bean
+    fun s3DownloadPresigner(): S3Presigner = S3Presigner.builder()
+        .region(Region.of(region))
+        .build()
+
+    @Bean
+    fun stsClient(): StsClient = StsClient.builder()
         .region(Region.of(region))
         .build()
 }

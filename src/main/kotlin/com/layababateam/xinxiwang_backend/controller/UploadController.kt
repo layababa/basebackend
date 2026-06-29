@@ -46,7 +46,7 @@ class UploadController(
     }
 
     @PostMapping("/direct/presign")
-    fun presignDirectUpload(@RequestBody body: Map<String, String>): ResponseEntity<ApiResponse<*>> {
+    fun presignDirectUpload(@RequestBody body: Map<String, Any>): ResponseEntity<ApiResponse<*>> {
         return uploadPort.presignDirectUpload(body).toResponse()
     }
 

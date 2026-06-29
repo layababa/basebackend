@@ -23,9 +23,20 @@ interface MessageRepository : MongoRepository<Message, String> {
         conversationId: String, pageable: Pageable
     ): List<Message>
 
-    fun findFirstByConversationIdOrderBySeqIdDesc(conversationId: String): Message?
+    // 按会话 + seqId 精确查找单条消息（补偿重放用）
+    fun findByConversationIdAndSeqId(conversationId: String, seqId: Long): Message?
 
-    // 按时间范围统计未读数（排除自己发的消息）
+    // 按时间范围统计会话消息总数（使用 idx_conv_created 索引）
+    fun countByConversationIdAndCreatedAtGreaterThan(
+        conversationId: String, createdAt: Long
+    ): Long
+
+    // 按时间范围统计某用户发的消息数（使用 idx_conv_sender_created 索引）
+    fun countByConversationIdAndSenderIdAndCreatedAtGreaterThan(
+        conversationId: String, senderId: String, createdAt: Long
+    ): Long
+
+    // v3: 统计会话中非指定用户的消息总数
     fun countByConversationIdAndSenderIdNotAndCreatedAtGreaterThan(
         conversationId: String, senderId: String, createdAt: Long
     ): Long
@@ -34,9 +45,4 @@ interface MessageRepository : MongoRepository<Message, String> {
     fun findByConversationIdAndCreatedAtLessThanOrderByCreatedAtDesc(
         conversationId: String, createdAt: Long, pageable: Pageable
     ): Page<Message>
-
-    // 按内容类型筛选媒体消息（图片/视频等）
-    fun findByConversationIdAndContentTypeInOrderBySeqIdDesc(
-        conversationId: String, contentTypes: List<Int>, pageable: Pageable
-    ): List<Message>
 }

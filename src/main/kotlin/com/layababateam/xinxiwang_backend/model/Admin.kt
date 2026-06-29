@@ -19,12 +19,6 @@ data class Admin(
     val mustChangePassword: Boolean = false,
     val lastLoginAt: Long? = null,
     val lastLoginIp: String? = null,
-    val lastLoginClientIp: String? = null,
-    val lastLoginProxyChain: String? = null,
-    val lastLoginDeviceId: String? = null,
-    val lastLoginUserAgent: String? = null,
-    val lastLoginDeviceSummary: String? = null,
-    val tokenVersion: Long = 0,
     val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

@@ -19,6 +19,16 @@ data class ClientVersionRule(
         fun resolveUpdateUrl(platform: String, customUrl: String?, defaults: ClientUpdateUrlDefaults): String =
             ClientVersionRules.resolveUpdateUrl(platform, customUrl, defaults)
 
+        fun getUpdateUrl(platform: String, customUrl: String? = null): String =
+            resolveUpdateUrl(
+                platform,
+                customUrl,
+                ClientUpdateUrlDefaults(
+                    defaultUrl = "https://xinxiwangim.dahzoutp.cn",
+                    iosAppStoreUrl = "https://apps.apple.com/app/xinxiwang/id6740877498",
+                ),
+            )
+
         fun compareVersions(v1: String, v2: String): Int =
             ClientVersionRules.compareVersions(v1, v2)
     }

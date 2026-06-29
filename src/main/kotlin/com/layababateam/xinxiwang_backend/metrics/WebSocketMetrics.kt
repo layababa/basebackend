@@ -6,28 +6,22 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import org.springframework.stereotype.Component
-import java.time.Duration
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Component
-class WebSocketMetrics(
-    private val registry: MeterRegistry,
-) {
+class WebSocketMetrics(private val registry: MeterRegistry) {
+
     private val activeConnections = AtomicInteger(0)
     private val typedReceivedCounters = ConcurrentHashMap<String, Counter>()
     private val typedHandlerTimers = ConcurrentHashMap<String, Timer>()
-    private val versionCounters = ConcurrentHashMap<String, AtomicInteger>()
-    private val boundOnlineUsersGauge = AtomicBoolean(false)
-    // ⚠️ Micrometer 对 Gauge 的 state object（这里是 supplier lambda）只持【弱引用】。
-    // 接入方在 @PostConstruct 里传入临时 lambda 绑定后，若本类不强引用住它，lambda 即无强引用
-    // → 被 GC 回收 → gauge 永久读 NaN（线上 ws_online_users 实测 NaN）。用字段钉住强引用。
-    @Suppress("unused")
-    private var onlineUsersSupplier: (() -> Number)? = null
+    private val typedQueueDelayTimers = ConcurrentHashMap<String, Timer>()
+    private val typedRateLimitedCounters = ConcurrentHashMap<String, Counter>()
+    private val boundExecutors = ConcurrentHashMap.newKeySet<String>()
 
-    val connectionsGauge: AtomicInteger =
-        registry.gauge("ws.connections.active", activeConnections) ?: activeConnections
+    val connectionsGauge = registry.gauge("ws.connections.active", activeConnections) ?: activeConnections
 
     private val messagesSentCounter = Counter.builder("ws.messages.sent")
         .description("Total WebSocket messages sent to clients")
@@ -43,37 +37,55 @@ class WebSocketMetrics(
         .description("WebSocket authentication failures")
         .register(registry)
 
-    fun getActiveConnectionCount(): Int = activeConnections.get()
+    // ── 版本分佈 Gauge ──────────────────────────────────────────
+    private val versionCounters = ConcurrentHashMap<String, AtomicInteger>()
+
+    private fun versionKey(platform: String, version: String) = "$platform:$version"
+
+    private fun getOrCreateVersionGauge(platform: String, version: String): AtomicInteger {
+        val key = versionKey(platform, version)
+        return versionCounters.computeIfAbsent(key) { k ->
+            val gauge = AtomicInteger(0)
+            registry.gauge(
+                "ws.connections.version",
+                Tags.of("platform", platform, "version", version),
+                gauge
+            )
+            gauge
+        }
+    }
+
+    // ── 去重在线人数 Gauge（ws_online_users）──────────────────────
+    private val boundOnlineUsersGauge = AtomicBoolean(false)
+    private var onlineUsersSupplier: (() -> Number)? = null
 
     /**
-     * 绑定去重在线用户数 gauge（ws_online_users）。
-     *
-     * `ws_connections_active` 计的是 channel 数（含多端/多重连），无法反映真实在线人数。
-     * 接入方在持有去重在线用户注册表（如 `userChannels`，key 为 userId）时，于 `@PostConstruct`
-     * 传入 `{ userChannels.size }` 即可让本指标反映去重后的在线人数。
-     *
-     * 用 supplier 回调反转依赖方向，避免接入方的会话管理器与本类形成构造循环。
-     * 幂等：重复调用仅首次生效。
+     * 绑定去重在线用户数 gauge（ws_online_users）。语义 = 当前节点 userChannels.size（按 userId 去重，
+     * 天然去重多设备/多重连）。幂等：重复调用仅首次生效。supplier 由 UserSessionManager 通过
+     * @PostConstruct 传入 `{ userChannels.size }`，反转依赖方向避免循环。
      */
     fun bindOnlineUsersGauge(supplier: () -> Number) {
         if (!boundOnlineUsersGauge.compareAndSet(false, true)) return
-        onlineUsersSupplier = supplier  // 强引用，防 Micrometer 弱引用被 GC → NaN
+        onlineUsersSupplier = supplier
         Gauge.builder("ws.online.users", supplier) { it().toDouble() }
             .description("Distinct online users on this node (deduplicated by userId)")
             .register(registry)
     }
 
+    fun getActiveConnectionCount(): Int = activeConnections.get()
+
     fun connectionOpened(platform: String? = null, version: String? = null) {
         activeConnections.incrementAndGet()
-        knownClientVersion(platform, version)?.let { (knownPlatform, knownVersion) ->
-            getOrCreateVersionGauge(knownPlatform, knownVersion).incrementAndGet()
+        if (!platform.isNullOrBlank() && !version.isNullOrBlank() && platform != "unknown" && version != "unknown") {
+            getOrCreateVersionGauge(platform, version).incrementAndGet()
         }
     }
 
     fun connectionClosed(platform: String? = null, version: String? = null) {
         activeConnections.decrementAndGet()
-        knownClientVersion(platform, version)?.let { (knownPlatform, knownVersion) ->
-            versionCounters[versionKey(knownPlatform, knownVersion)]?.decrementAndGet()
+        if (!platform.isNullOrBlank() && !version.isNullOrBlank() && platform != "unknown" && version != "unknown") {
+            val key = versionKey(platform, version)
+            versionCounters[key]?.decrementAndGet()
         }
     }
 
@@ -90,6 +102,15 @@ class WebSocketMetrics(
         messagesSentCounter.increment()
     }
 
+    fun requestRateLimited(type: String) {
+        typedRateLimitedCounters.computeIfAbsent(type) {
+            Counter.builder("ws.requests.ratelimited")
+                .tag("type", type)
+                .description("WebSocket requests rate-limited by backend guard")
+                .register(registry)
+        }.increment()
+    }
+
     fun authSuccess() {
         authSuccessCounter.increment()
     }
@@ -104,31 +125,35 @@ class WebSocketMetrics(
                 .tag("type", type)
                 .description("Handler processing duration by type")
                 .register(registry)
-        }.record(Duration.ofNanos(durationNanos))
+        }.record(java.time.Duration.ofNanos(durationNanos))
     }
 
-    private fun getOrCreateVersionGauge(platform: String, version: String): AtomicInteger {
-        val key = versionKey(platform, version)
-        return versionCounters.computeIfAbsent(key) {
-            val gauge = AtomicInteger(0)
-            registry.gauge(
-                "ws.connections.version",
-                Tags.of("platform", platform, "version", version),
-                gauge,
-            )
-            gauge
-        }
+    fun recordTaskQueueDelay(executor: String, type: String, delayNanos: Long) {
+        typedQueueDelayTimers.computeIfAbsent("$executor:$type") {
+            Timer.builder("ws.task.queue.delay")
+                .tags("executor", executor, "type", type)
+                .description("Time spent waiting in the WebSocket business executor queue")
+                .register(registry)
+        }.record(java.time.Duration.ofNanos(delayNanos))
     }
 
-    private fun knownClientVersion(platform: String?, version: String?): Pair<String, String>? {
-        if (platform.isNullOrBlank() || version.isNullOrBlank()) return null
-        if (platform == UNKNOWN_VALUE || version == UNKNOWN_VALUE) return null
-        return platform to version
-    }
-
-    private fun versionKey(platform: String, version: String): String = "$platform:$version"
-
-    private companion object {
-        const val UNKNOWN_VALUE = "unknown"
+    fun bindExecutor(name: String, executor: ThreadPoolExecutor) {
+        if (!boundExecutors.add(name)) return
+        Gauge.builder("ws.executor.active", executor) { it.activeCount.toDouble() }
+            .tags(Tags.of("executor", name))
+            .description("Active WebSocket executor threads")
+            .register(registry)
+        Gauge.builder("ws.executor.pool.size", executor) { it.poolSize.toDouble() }
+            .tags(Tags.of("executor", name))
+            .description("Current WebSocket executor pool size")
+            .register(registry)
+        Gauge.builder("ws.executor.queue.size", executor) { it.queue.size.toDouble() }
+            .tags(Tags.of("executor", name))
+            .description("Queued WebSocket executor tasks")
+            .register(registry)
+        Gauge.builder("ws.executor.completed", executor) { it.completedTaskCount.toDouble() }
+            .tags(Tags.of("executor", name))
+            .description("Completed WebSocket executor tasks")
+            .register(registry)
     }
 }
