@@ -35,4 +35,9 @@ class UserDtoOperatorTest {
 
         assertTrue(dto.isOperator)
     }
+
+    @Test
+    fun userDtoExposesCustomerServiceFlagForAvatarRoleBadges() {
+        assertTrue(UserDto::class.members.any { it.name == "isCustomerService" })
+    }
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository
 interface CustomerServiceAccountRepository : MongoRepository<CustomerServiceAccount, String> {
     fun findAllByOrderBySortOrderAscCreatedAtAsc(): List<CustomerServiceAccount>
     fun findByUserId(userId: String): CustomerServiceAccount?
+    fun findByUserIdInAndEnabledTrue(userIds: Collection<String>): List<CustomerServiceAccount>
 }
 
 @Repository

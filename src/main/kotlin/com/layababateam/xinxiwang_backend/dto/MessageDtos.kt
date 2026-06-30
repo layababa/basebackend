@@ -118,7 +118,9 @@ data class UserSummaryDto(
     val avatarUrl: String,
     val gender: Int,
     val bio: String,
-    val isBot: Boolean = false
+    val isBot: Boolean = false,
+    val isOperator: Boolean = false,
+    val isCustomerService: Boolean = false
 )
 
 data class FriendRequestSendDto(
