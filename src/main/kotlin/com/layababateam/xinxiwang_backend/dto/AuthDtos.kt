@@ -74,7 +74,8 @@ data class UserDto(
     val momentsBgUrl: String? = null,
     val momentsVisibility: String = "all",
     val isBot: Boolean = false,
-    val isOperator: Boolean = false
+    val isOperator: Boolean = false,
+    val isCustomerService: Boolean = false
 )
 
 data class UserUpdateRequest(

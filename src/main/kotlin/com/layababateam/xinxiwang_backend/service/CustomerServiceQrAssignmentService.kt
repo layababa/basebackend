@@ -62,7 +62,7 @@ class CustomerServiceQrAssignmentService(
     }
 
     fun createAccount(request: CustomerServiceAccountRequest): CustomerServiceAccountResponse {
-        val user = operatorUser(request.userId)
+        val user = customerServiceUser(request.userId)
         if (accountRepository.findByUserId(user.id.orEmpty()) != null) {
             throw BusinessException(ErrorCode.INVALID_PARAM, "customer service account already exists")
         }
@@ -83,7 +83,7 @@ class CustomerServiceQrAssignmentService(
 
     fun updateAccount(id: String, request: CustomerServiceAccountRequest): CustomerServiceAccountResponse {
         val current = accountById(id)
-        val user = operatorUser(request.userId)
+        val user = customerServiceUser(request.userId)
         val duplicate = accountRepository.findByUserId(user.id.orEmpty())
         if (duplicate != null && duplicate.id != id) {
             throw BusinessException(ErrorCode.INVALID_PARAM, "customer service account already exists")
@@ -403,14 +403,11 @@ class CustomerServiceQrAssignmentService(
     private fun qrById(id: String): CustomerServiceQrCode =
         qrCodeRepository.findById(id).getOrNull() ?: throw NotFoundException("customer service qr not found")
 
-    private fun operatorUser(userId: String): User {
-        val user = userRepository.findByIdAndIsDeletedFalse(userId.trim()) ?: throw NotFoundException("user not found")
-        if (!user.isOperator) throw BusinessException(ErrorCode.INVALID_PARAM, "user is not an operator account")
-        return user
-    }
+    private fun customerServiceUser(userId: String): User =
+        userRepository.findByIdAndIsDeletedFalse(userId.trim()) ?: throw NotFoundException("user not found")
 
     private fun isEligibleCustomerServiceUser(user: User?): Boolean =
-        user != null && !user.isDeleted && user.isOperator
+        user != null && !user.isDeleted
 
     private fun usersById(userIds: Collection<String>): Map<String, User> =
         userRepository.findAllById(userIds.distinct()).associateBy { it.id.orEmpty() }
