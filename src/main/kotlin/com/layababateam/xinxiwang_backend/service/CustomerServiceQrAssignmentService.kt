@@ -8,18 +8,23 @@ import com.layababateam.xinxiwang_backend.dto.CustomerServiceQrBindingsUpdateReq
 import com.layababateam.xinxiwang_backend.dto.CustomerServiceQrCodeRequest
 import com.layababateam.xinxiwang_backend.dto.CustomerServiceQrCodeResponse
 import com.layababateam.xinxiwang_backend.dto.CustomerServiceQrDetailResponse
+import com.layababateam.xinxiwang_backend.dto.CustomerServiceQrLandingReservationResponse
 import com.layababateam.xinxiwang_backend.dto.CustomerServiceSummary
 import com.layababateam.xinxiwang_backend.dto.ErrorCode
+import com.layababateam.xinxiwang_backend.config.ClientUpdateUrlConfig
 import com.layababateam.xinxiwang_backend.exception.BusinessException
 import com.layababateam.xinxiwang_backend.exception.ForbiddenException
 import com.layababateam.xinxiwang_backend.exception.NotFoundException
 import com.layababateam.xinxiwang_backend.model.CustomerServiceAccount
 import com.layababateam.xinxiwang_backend.model.CustomerServiceQrBinding
 import com.layababateam.xinxiwang_backend.model.CustomerServiceQrCode
+import com.layababateam.xinxiwang_backend.model.CustomerServiceQrReservation
 import com.layababateam.xinxiwang_backend.model.User
+import com.layababateam.xinxiwang_backend.repository.AppLatestVersionRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceAccountRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrBindingRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrCodeRepository
+import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrReservationRepository
 import com.layababateam.xinxiwang_backend.repository.UserRepository
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.ObjectProvider
@@ -38,11 +43,15 @@ class CustomerServiceQrAssignmentService(
     private val accountRepository: CustomerServiceAccountRepository,
     private val qrCodeRepository: CustomerServiceQrCodeRepository,
     private val bindingRepository: CustomerServiceQrBindingRepository,
+    private val reservationRepository: CustomerServiceQrReservationRepository,
+    private val appLatestVersionRepository: AppLatestVersionRepository,
     private val userRepository: UserRepository,
     private val mongoTemplate: MongoTemplate,
     private val friendPortProvider: ObjectProvider<CustomerServiceFriendPort>,
     @Value("\${xinxiwang.customer-service-qr.public-base-url:}")
     private val configuredPublicBaseUrl: String,
+    @Value("\${xinxiwang.customer-service-qr.admin-route-base-url:}")
+    private val configuredAdminRouteBaseUrl: String,
 ) {
     private val assignmentLock = Any()
 
@@ -113,6 +122,9 @@ class CustomerServiceQrAssignmentService(
                 name = body.name.trim(),
                 code = UUID.randomUUID().toString().replace("-", ""),
                 remark = trimToNull(body.remark),
+                landingGuideText = landingText(body.landingGuideText, DEFAULT_LANDING_GUIDE_TEXT),
+                landingButtonText = landingText(body.landingButtonText, DEFAULT_LANDING_BUTTON_TEXT),
+                landingFallbackText = landingText(body.landingFallbackText, DEFAULT_LANDING_FALLBACK_TEXT),
                 enabled = body.enabled,
                 createdBy = adminId,
                 createdAt = now,
@@ -128,6 +140,9 @@ class CustomerServiceQrAssignmentService(
             current.copy(
                 name = body.name.trim(),
                 remark = trimToNull(body.remark),
+                landingGuideText = landingText(body.landingGuideText, current.landingGuideText),
+                landingButtonText = landingText(body.landingButtonText, current.landingButtonText),
+                landingFallbackText = landingText(body.landingFallbackText, current.landingFallbackText),
                 enabled = body.enabled,
                 updatedAt = System.currentTimeMillis(),
             ),
@@ -198,8 +213,44 @@ class CustomerServiceQrAssignmentService(
 
     fun apply(code: String, scannerUserId: String): CustomerServiceQrApplyResponse =
         synchronized(assignmentLock) {
-            applyLocked(code.trim(), scannerUserId)
+            applyCodeOrReservationLocked(code.trim(), scannerUserId)
         }
+
+    fun createLandingReservation(
+        code: String,
+        platform: String?,
+        request: HttpServletRequest,
+    ): CustomerServiceQrLandingReservationResponse {
+        val qr = qrCodeRepository.findByCode(code.trim()) ?: throw NotFoundException("customer service qr not found")
+        if (!qr.enabled) throw NotFoundException("customer service qr not available")
+        val selected = selectedCustomerServiceForQr(qr)
+        val now = System.currentTimeMillis()
+        val token = UUID.randomUUID().toString().replace("-", "")
+        val expiresAt = now + RESERVATION_TTL_MILLIS
+        val reservation = reservationRepository.save(
+            CustomerServiceQrReservation(
+                token = token,
+                code = qr.code,
+                qrCodeId = qr.id.orEmpty(),
+                customerServiceId = selected.account.id.orEmpty(),
+                customerServiceUserId = selected.account.userId,
+                expiresAt = expiresAt,
+                createdAt = now,
+            ),
+        )
+        return CustomerServiceQrLandingReservationResponse(
+            qrCodeId = qr.id.orEmpty(),
+            code = qr.code,
+            guideText = qr.landingGuideText,
+            buttonText = qr.landingButtonText,
+            fallbackText = qr.landingFallbackText,
+            customerService = toSummary(selected.user),
+            reservationToken = reservation.token,
+            appDeepLink = "xianyun://customerservice?=${reservation.token}",
+            downloadUrls = downloadUrls(platform),
+            expiresAt = reservation.expiresAt,
+        )
+    }
 
     fun releaseForDeletedUser(userId: String) {
         synchronized(assignmentLock) {
@@ -223,6 +274,76 @@ class CustomerServiceQrAssignmentService(
 
         val qr = qrCodeRepository.findByCode(code) ?: throw NotFoundException("customer service qr not found")
         if (!qr.enabled) throw NotFoundException("customer service qr not available")
+        return assignSelectedToScanner(scannerUserId, qr, selectedCustomerServiceForQr(qr))
+    }
+
+    private fun applyCodeOrReservationLocked(code: String, scannerUserId: String): CustomerServiceQrApplyResponse {
+        val reservation = reservationRepository.findByToken(code)
+        if (reservation != null) {
+            return if (reservation.expiresAt < System.currentTimeMillis()) {
+                applyLocked(reservation.code, scannerUserId)
+            } else {
+                applyReservationLocked(reservation, scannerUserId)
+            }
+        }
+        return applyLocked(code, scannerUserId)
+    }
+
+    private fun applyReservationLocked(
+        reservation: CustomerServiceQrReservation,
+        scannerUserId: String,
+    ): CustomerServiceQrApplyResponse {
+        val scanner = userRepository.findByIdAndIsDeletedFalse(scannerUserId) ?: throw NotFoundException("user not found")
+        if (scanner.isOperator) throw ForbiddenException("customer service account cannot scan customer service qr")
+        val alreadyAssigned = scanner.assignedCsUserId
+        if (!alreadyAssigned.isNullOrBlank()) {
+            return assignedResponse(alreadyAssigned, scanner.assignedCsQrCodeId.orEmpty(), true)
+        }
+        val qr = qrCodeRepository.findById(reservation.qrCodeId).getOrNull()
+            ?: throw NotFoundException("customer service qr not found")
+        if (!qr.enabled) throw NotFoundException("customer service qr not available")
+        val account = accountRepository.findById(reservation.customerServiceId).getOrNull()
+            ?: throw NotFoundException("customer service account not found")
+        val user = userRepository.findByIdAndIsDeletedFalse(account.userId)
+            ?: throw NotFoundException("customer service user not found")
+        val binding = bindingRepository.findByQrCodeIdAndCustomerServiceId(qr.id.orEmpty(), account.id.orEmpty())
+            ?: throw NotFoundException("customer service qr binding not found")
+        if (!binding.enabled || !account.enabled || !isEligibleCustomerServiceUser(user)) {
+            throw BusinessException(ErrorCode.SERVICE_UNAVAILABLE, "no available customer service account")
+        }
+        return assignSelectedToScanner(scannerUserId, qr, SelectedCustomerService(binding, account, user))
+    }
+
+    private fun assignSelectedToScanner(
+        scannerUserId: String,
+        qr: CustomerServiceQrCode,
+        selected: SelectedCustomerService,
+    ): CustomerServiceQrApplyResponse {
+        val qrId = qr.id.orEmpty()
+        assignUserOrReturnExisting(scannerUserId, selected.account.userId, qrId)?.let { existingUser ->
+            return assignedResponse(existingUser.assignedCsUserId.orEmpty(), existingUser.assignedCsQrCodeId.orEmpty(), true)
+        }
+
+        incrementCounts(qrId, selected.binding.id.orEmpty(), selected.account.id.orEmpty(), 1)
+        try {
+            val friendPort = friendPortProvider.getIfAvailable()
+                ?: throw BusinessException(ErrorCode.SERVICE_UNAVAILABLE, "customer service friend port is not configured")
+            friendPort.ensureCustomerServiceFriendship(scannerUserId, selected.user.id.orEmpty())
+        } catch (e: RuntimeException) {
+            rollbackAssignment(scannerUserId, selected.account.userId, qrId, selected.binding.id.orEmpty(), selected.account.id.orEmpty())
+            throw e
+        }
+
+        return CustomerServiceQrApplyResponse(
+            alreadyAssigned = false,
+            qrCodeId = qrId,
+            customerServiceId = selected.account.id.orEmpty(),
+            customerServiceUserId = selected.account.userId,
+            customerService = toSummary(selected.user),
+        )
+    }
+
+    private fun selectedCustomerServiceForQr(qr: CustomerServiceQrCode): SelectedCustomerService {
         val qrId = qr.id.orEmpty()
         val bindings = bindingRepository.findByQrCodeIdOrderByAssignedCountAscSortOrderAscCreatedAtAsc(qrId)
         val accounts = accountRepository.findAllById(bindings.map { it.customerServiceId }).associateBy { it.id.orEmpty() }
@@ -244,28 +365,8 @@ class CustomerServiceQrAssignmentService(
 
         val binding = bindings.first { it.id.orEmpty() == selected.bindingId }
         val account = accounts[selected.customerServiceId] ?: throw NotFoundException("customer service account not found")
-        val customerServiceUser = users[account.userId] ?: throw NotFoundException("customer service user not found")
-        assignUserOrReturnExisting(scannerUserId, account.userId, qrId)?.let { existingUser ->
-            return assignedResponse(existingUser.assignedCsUserId.orEmpty(), existingUser.assignedCsQrCodeId.orEmpty(), true)
-        }
-
-        incrementCounts(qrId, binding.id.orEmpty(), account.id.orEmpty(), 1)
-        try {
-            val friendPort = friendPortProvider.getIfAvailable()
-                ?: throw BusinessException(ErrorCode.SERVICE_UNAVAILABLE, "customer service friend port is not configured")
-            friendPort.ensureCustomerServiceFriendship(scannerUserId, customerServiceUser.id.orEmpty())
-        } catch (e: RuntimeException) {
-            rollbackAssignment(scannerUserId, account.userId, qrId, binding.id.orEmpty(), account.id.orEmpty())
-            throw e
-        }
-
-        return CustomerServiceQrApplyResponse(
-            alreadyAssigned = false,
-            qrCodeId = qrId,
-            customerServiceId = account.id.orEmpty(),
-            customerServiceUserId = account.userId,
-            customerService = toSummary(customerServiceUser),
-        )
+        val user = users[account.userId] ?: throw NotFoundException("customer service user not found")
+        return SelectedCustomerService(binding, account, user)
     }
 
     private fun assignUserOrReturnExisting(scannerUserId: String, customerServiceUserId: String, qrCodeId: String): User? {
@@ -360,8 +461,11 @@ class CustomerServiceQrAssignmentService(
             id = qr.id.orEmpty(),
             name = qr.name,
             code = qr.code,
-            qrUrl = CustomerServiceQrAssignmentRules.buildQrUrl(publicBaseUrl(request), qr.code),
+            qrUrl = CustomerServiceQrAssignmentRules.buildLandingUrl(adminRouteBaseUrl(request), qr.code),
             remark = qr.remark,
+            landingGuideText = qr.landingGuideText,
+            landingButtonText = qr.landingButtonText,
+            landingFallbackText = qr.landingFallbackText,
             enabled = qr.enabled,
             assignedCount = qr.assignedCount,
             bindingCount = bindings.count { it.enabled },
@@ -415,8 +519,23 @@ class CustomerServiceQrAssignmentService(
     private fun trimToNull(value: String?): String? =
         value?.trim()?.takeIf { it.isNotBlank() }
 
+    private fun landingText(value: String?, fallback: String): String =
+        trimToNull(value) ?: fallback
+
+    private fun downloadUrls(preferredPlatform: String?): Map<String, String> {
+        val platforms = linkedSetOf("android", "ios")
+        ClientVersionRules.normalizePlatform(preferredPlatform)?.let { platforms += it }
+        return platforms.associateWith { platform ->
+            appLatestVersionRepository.findByPlatform(platform)?.downloadUrl
+                ?: ClientVersionRules.resolveUpdateUrl(platform, null, ClientUpdateUrlConfig.defaults)
+        }
+    }
+
     private fun publicBaseUrl(request: HttpServletRequest): String =
         configuredPublicBaseUrl.trim().takeIf { it.isNotBlank() } ?: externalBaseUrl(request)
+
+    private fun adminRouteBaseUrl(request: HttpServletRequest): String =
+        configuredAdminRouteBaseUrl.trim().takeIf { it.isNotBlank() } ?: "${externalBaseUrl(request)}/admin"
 
     private fun externalBaseUrl(request: HttpServletRequest): String {
         val proto = request.getHeader("X-Forwarded-Proto")?.substringBefore(',')?.trim().takeUnless { it.isNullOrBlank() }
@@ -424,5 +543,18 @@ class CustomerServiceQrAssignmentService(
         val host = request.getHeader("X-Forwarded-Host")?.substringBefore(',')?.trim().takeUnless { it.isNullOrBlank() }
             ?: request.serverName + if (request.serverPort in setOf(80, 443)) "" else ":${request.serverPort}"
         return "$proto://$host"
+    }
+
+    private data class SelectedCustomerService(
+        val binding: CustomerServiceQrBinding,
+        val account: CustomerServiceAccount,
+        val user: User,
+    )
+
+    private companion object {
+        const val DEFAULT_LANDING_GUIDE_TEXT = "Tap the button to add support in the app."
+        const val DEFAULT_LANDING_BUTTON_TEXT = "Add support"
+        const val DEFAULT_LANDING_FALLBACK_TEXT = "Install the app first if it does not open."
+        const val RESERVATION_TTL_MILLIS = 15 * 60 * 1000L
     }
 }

@@ -112,6 +112,43 @@ class CustomerServiceWorkbenchServiceTest {
         assertEquals(0, state.entrySaveCount)
         assertEquals(200L, state.entries[entryId]?.updatedAt)
     }
+
+    @Test
+    fun `customer service reply to external api session stays in workbench without im relay`() {
+        val entryId = CustomerServiceWorkbenchService.appEntryId("cs-1")
+        val state = WorkbenchState(
+            users = linkedMapOf("cs-1" to user("cs-1", "cs01", "CS One", isOperator = true)),
+            accounts = linkedMapOf("account-1" to account("account-1", "cs-1")),
+            entries = linkedMapOf(
+                entryId to appEntry(
+                    id = entryId,
+                    name = "Support workbench",
+                    seatAdminIds = listOf("cs-1"),
+                    updatedAt = 200L,
+                ),
+            ),
+            sessions = linkedMapOf(
+                "session-1" to externalApiSession(
+                    id = "session-1",
+                    entryId = entryId,
+                    externalAnonymousId = "visitor-1",
+                    assignedAdminId = "cs-1",
+                ),
+            ),
+        )
+        val service = state.service()
+
+        val reply = service.sendText(
+            customerServiceUserId = "cs-1",
+            sessionId = "session-1",
+            content = "reply from support",
+        )
+
+        assertEquals(WebCustomerServiceSenderType.ADMIN, reply.senderType)
+        assertEquals("reply from support", reply.content)
+        assertEquals(1, state.messages.size)
+        assertEquals("reply from support", state.sessions["session-1"]?.lastMessagePreview)
+    }
 }
 
 private data class WorkbenchState(
@@ -262,6 +299,27 @@ private fun session(id: String, entryId: String, visitorId: String) = WebCustome
     entryId = entryId,
     visitorId = visitorId,
     visitorName = "Alice",
+    lastMessageAt = 100L,
+    createdAt = 100L,
+    updatedAt = 100L,
+)
+
+private fun externalApiSession(
+    id: String,
+    entryId: String,
+    externalAnonymousId: String,
+    assignedAdminId: String,
+) = WebCustomerServiceSession(
+    id = id,
+    entryId = entryId,
+    visitorId = "external:credential-1:$externalAnonymousId",
+    visitorName = "Anonymous",
+    status = WebCustomerServiceSessionStatus.ACTIVE,
+    assignedAdminId = assignedAdminId,
+    assignedAdminUsername = "Support",
+    sourceUrl = "external-api://credential-1",
+    externalApiCredentialId = "credential-1",
+    externalAnonymousId = externalAnonymousId,
     lastMessageAt = 100L,
     createdAt = 100L,
     updatedAt = 100L,

@@ -67,6 +67,7 @@ dependencies {
     // GlobalExceptionHandler 依赖的异常类型来自 spring-web；其异常处理路径调用 Sentry / Servlet。
     testImplementation 'org.springframework:spring-web:7.0.2'
     testImplementation 'org.springframework.data:spring-data-mongodb:5.0.2'
+    testImplementation 'org.springframework.data:spring-data-redis:4.0.2'
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
     testImplementation 'io.sentry:sentry:8.12.0'

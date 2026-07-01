@@ -103,13 +103,11 @@ class CustomerServiceWorkbenchService(
         if (body.isBlank() || body.length > TEXT_MESSAGE_MAX_LENGTH) {
             throw BusinessException(ErrorCode.INVALID_PARAM, "消息内容不能为空且不能超过5000字")
         }
-        requireReplyPort().sendCustomerServiceReply(
-            CustomerServiceWorkbenchReplyCommand(
-                customerServiceUserId = customerServiceUserId,
-                customerUserId = session.visitorId,
-                contentType = ContentType.TEXT.value,
-                content = body,
-            ),
+        relayToImIfNeeded(
+            session = session,
+            customerServiceUserId = customerServiceUserId,
+            contentType = ContentType.TEXT.value,
+            content = body,
         )
         return saveMessage(
             session = session,
@@ -126,14 +124,12 @@ class CustomerServiceWorkbenchService(
         val context = ensureCustomerServiceContext(customerServiceUserId)
         val session = requireReplyableSession(sessionId, context.entry.id.orEmpty(), customerServiceUserId)
         val imageUrl = webCustomerServiceService.uploadCustomerServiceImage(file, requestId = null)
-        requireReplyPort().sendCustomerServiceReply(
-            CustomerServiceWorkbenchReplyCommand(
-                customerServiceUserId = customerServiceUserId,
-                customerUserId = session.visitorId,
-                contentType = ContentType.IMAGE.value,
-                content = imageUrl,
-                imageUrl = imageUrl,
-            ),
+        relayToImIfNeeded(
+            session = session,
+            customerServiceUserId = customerServiceUserId,
+            contentType = ContentType.IMAGE.value,
+            content = imageUrl,
+            imageUrl = imageUrl,
         )
         return saveMessage(
             session = session,
@@ -144,6 +140,63 @@ class CustomerServiceWorkbenchService(
             content = IMAGE_MESSAGE_CONTENT,
             imageUrl = imageUrl,
         ).toWebCustomerServiceResponse()
+    }
+
+    fun recordExternalApiVisitorMessage(
+        customerServiceUserId: String,
+        externalApiCredentialId: String,
+        externalAnonymousId: String,
+        visitorName: String?,
+        sourceUrl: String?,
+        content: String,
+    ): WebCustomerServiceMessage {
+        val context = ensureCustomerServiceContext(customerServiceUserId)
+        val body = content.trim()
+        if (body.isBlank() || body.length > TEXT_MESSAGE_MAX_LENGTH) {
+            throw BusinessException(ErrorCode.INVALID_PARAM, "message content cannot be empty or exceed 5000 characters")
+        }
+        val now = System.currentTimeMillis()
+        val credentialId = externalApiCredentialId.trim()
+        val anonymousId = externalAnonymousId.trim()
+        val resolvedVisitorName = WebCustomerServiceRules.trimToNull(visitorName) ?: "Anonymous"
+        val session = sessionRepository
+            .findFirstByExternalApiCredentialIdAndExternalAnonymousIdAndStatusNotOrderByLastMessageAtDesc(
+                externalApiCredentialId = credentialId,
+                externalAnonymousId = anonymousId,
+                status = WebCustomerServiceSessionStatus.CLOSED,
+            )?.let { existing ->
+                existing.copy(
+                    status = WebCustomerServiceSessionStatus.ACTIVE,
+                    assignedAdminId = customerServiceUserId,
+                    assignedAdminUsername = context.displayName,
+                    visitorName = resolvedVisitorName,
+                    sourceUrl = WebCustomerServiceRules.trimToNull(sourceUrl) ?: existing.sourceUrl,
+                    updatedAt = now,
+                )
+            } ?: WebCustomerServiceSession(
+                entryId = context.entry.id.orEmpty(),
+                visitorId = externalVisitorId(credentialId, anonymousId),
+                visitorName = resolvedVisitorName,
+                status = WebCustomerServiceSessionStatus.ACTIVE,
+                assignedAdminId = customerServiceUserId,
+                assignedAdminUsername = context.displayName,
+                sourceUrl = WebCustomerServiceRules.trimToNull(sourceUrl) ?: "external-api://$credentialId",
+                externalApiCredentialId = credentialId,
+                externalAnonymousId = anonymousId,
+                createdAt = now,
+                lastMessageAt = now,
+                updatedAt = now,
+            )
+        val savedSession = sessionRepository.save(session)
+        return saveMessage(
+            session = savedSession,
+            senderType = WebCustomerServiceSenderType.VISITOR,
+            senderId = externalVisitorId(credentialId, anonymousId),
+            senderName = resolvedVisitorName,
+            contentType = WebCustomerServiceContentType.TEXT,
+            content = body,
+            imageUrl = null,
+        )
     }
 
     fun recordAssignedCustomerMessage(
@@ -328,6 +381,27 @@ class CustomerServiceWorkbenchService(
     private fun requireReplyPort(): CustomerServiceWorkbenchReplyPort =
         replyPort ?: throw BusinessException(ErrorCode.SERVICE_UNAVAILABLE, "customer service reply port is not configured")
 
+    private fun relayToImIfNeeded(
+        session: WebCustomerServiceSession,
+        customerServiceUserId: String,
+        contentType: Int,
+        content: String,
+        imageUrl: String? = null,
+    ) {
+        if (!session.externalApiCredentialId.isNullOrBlank()) {
+            return
+        }
+        requireReplyPort().sendCustomerServiceReply(
+            CustomerServiceWorkbenchReplyCommand(
+                customerServiceUserId = customerServiceUserId,
+                customerUserId = session.visitorId,
+                contentType = contentType,
+                content = content,
+                imageUrl = imageUrl,
+            ),
+        )
+    }
+
     private fun toEntryResponse(entry: WebCustomerServiceEntry): WebCustomerServiceEntryResponse =
         WebCustomerServiceEntryResponse(
             id = entry.id.orEmpty(),
@@ -377,5 +451,8 @@ class CustomerServiceWorkbenchService(
 
         fun appEntryId(customerServiceUserId: String): String =
             "app-customer-service-$customerServiceUserId"
+
+        fun externalVisitorId(externalApiCredentialId: String, externalAnonymousId: String): String =
+            "external:$externalApiCredentialId:$externalAnonymousId"
     }
 }

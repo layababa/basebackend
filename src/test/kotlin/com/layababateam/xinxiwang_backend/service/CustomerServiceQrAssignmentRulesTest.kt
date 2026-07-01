@@ -51,4 +51,11 @@ class CustomerServiceQrAssignmentRulesTest {
 
         assertEquals("https://chat.example.com/customerservice?=abc+123", url)
     }
+
+    @Test
+    fun `builds customer service qr landing url under admin route`() {
+        val url = CustomerServiceQrAssignmentRules.buildLandingUrl("https://admin.example.com/admin/", "abc 123")
+
+        assertEquals("https://admin.example.com/admin/customer-service/qr/abc+123", url)
+    }
 }

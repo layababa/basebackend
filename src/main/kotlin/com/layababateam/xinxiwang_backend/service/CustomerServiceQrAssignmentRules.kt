@@ -28,4 +28,11 @@ object CustomerServiceQrAssignmentRules {
         val encoded = URLEncoder.encode(code, StandardCharsets.UTF_8)
         return "$base/customerservice?=$encoded"
     }
+
+    fun buildLandingUrl(adminRouteBaseUrl: String, code: String): String {
+        val base = adminRouteBaseUrl.trim().trimEnd('/')
+        val normalizedBase = if (base.endsWith("/admin")) base else "$base/admin"
+        val encoded = URLEncoder.encode(code, StandardCharsets.UTF_8)
+        return "$normalizedBase/customer-service/qr/$encoded"
+    }
 }
