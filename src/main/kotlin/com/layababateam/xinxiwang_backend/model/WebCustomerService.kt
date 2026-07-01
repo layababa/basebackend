@@ -43,6 +43,8 @@ data class WebCustomerServiceSession(
     val sourceUrl: String? = null,
     val referrer: String? = null,
     val userAgent: String? = null,
+    val externalApiCredentialId: String? = null,
+    val externalAnonymousId: String? = null,
     val status: WebCustomerServiceSessionStatus = WebCustomerServiceSessionStatus.WAITING,
     val assignedAdminId: String? = null,
     val assignedAdminUsername: String? = null,

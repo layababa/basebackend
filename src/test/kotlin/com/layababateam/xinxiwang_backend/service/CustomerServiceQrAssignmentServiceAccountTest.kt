@@ -4,9 +4,11 @@ import com.layababateam.xinxiwang_backend.controller.unusedMongoTemplate
 import com.layababateam.xinxiwang_backend.dto.CustomerServiceAccountRequest
 import com.layababateam.xinxiwang_backend.model.CustomerServiceAccount
 import com.layababateam.xinxiwang_backend.model.User
+import com.layababateam.xinxiwang_backend.repository.AppLatestVersionRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceAccountRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrBindingRepository
 import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrCodeRepository
+import com.layababateam.xinxiwang_backend.repository.CustomerServiceQrReservationRepository
 import com.layababateam.xinxiwang_backend.repository.UserRepository
 import org.springframework.beans.factory.ObjectProvider
 import java.lang.reflect.Proxy
@@ -55,10 +57,13 @@ private data class CustomerServiceAccountState(
         accountRepository = accountRepository(),
         qrCodeRepository = unsupportedRepository(CustomerServiceQrCodeRepository::class.java),
         bindingRepository = unsupportedRepository(CustomerServiceQrBindingRepository::class.java),
+        reservationRepository = unsupportedRepository(CustomerServiceQrReservationRepository::class.java),
+        appLatestVersionRepository = unsupportedRepository(AppLatestVersionRepository::class.java),
         userRepository = userRepository(),
         mongoTemplate = unusedMongoTemplate(),
         friendPortProvider = unsupportedFriendProvider(),
         configuredPublicBaseUrl = "",
+        configuredAdminRouteBaseUrl = "",
     )
 
     private fun accountRepository(): CustomerServiceAccountRepository =

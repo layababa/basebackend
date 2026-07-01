@@ -36,6 +36,12 @@ data class CustomerServiceQrCodeRequest(
     val name: String,
     @field:Size(max = 200, message = "remark must not exceed 200 characters")
     val remark: String? = null,
+    @field:Size(max = 300, message = "landingGuideText must not exceed 300 characters")
+    val landingGuideText: String? = null,
+    @field:Size(max = 80, message = "landingButtonText must not exceed 80 characters")
+    val landingButtonText: String? = null,
+    @field:Size(max = 300, message = "landingFallbackText must not exceed 300 characters")
+    val landingFallbackText: String? = null,
     val enabled: Boolean = true,
 )
 
@@ -45,6 +51,9 @@ data class CustomerServiceQrCodeResponse(
     val code: String,
     val qrUrl: String,
     val remark: String?,
+    val landingGuideText: String,
+    val landingButtonText: String,
+    val landingFallbackText: String,
     val enabled: Boolean,
     val assignedCount: Long,
     val bindingCount: Int,
@@ -101,4 +110,17 @@ data class CustomerServiceQrApplyResponse(
     val customerServiceId: String,
     val customerServiceUserId: String,
     val customerService: CustomerServiceSummary,
+)
+
+data class CustomerServiceQrLandingReservationResponse(
+    val qrCodeId: String,
+    val code: String,
+    val guideText: String,
+    val buttonText: String,
+    val fallbackText: String,
+    val customerService: CustomerServiceSummary,
+    val reservationToken: String,
+    val appDeepLink: String,
+    val downloadUrls: Map<String, String>,
+    val expiresAt: Long,
 )
