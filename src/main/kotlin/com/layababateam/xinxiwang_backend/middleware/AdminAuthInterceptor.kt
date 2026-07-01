@@ -101,18 +101,28 @@ class AdminAuthInterceptor(
     }
 
     private fun sendUnauthorized(response: HttpServletResponse): Boolean {
-        response.status = 401
-        response.contentType = "application/json"
-        response.characterEncoding = "UTF-8"
-        response.writer.write("""{"success":false,"code":"20001","message":"未授权，请重新登录"}""")
+        writeJsonError(response, 401, """{"success":false,"code":"20001","message":"未授权，请重新登录"}""")
         return false
     }
 
     private fun sendForbidden(response: HttpServletResponse, message: String = "权限不足"): Boolean {
-        response.status = 403
+        writeJsonError(response, 403, """{"success":false,"code":"20004","message":"$message"}""")
+        return false
+    }
+
+    // 用 outputStream 直接写字节 + 显式 Content-Length，而不是 response.writer.write(...)。
+    // 之前的实现偶发出现 403/401 响应 status 和 header 都对，但 body 是空的（content-length: 0）：
+    // PrintWriter 默认不会立即 flush，一旦请求链路里任何一方先摸过 getOutputStream()（例如响应包装/压缩相关
+    // 组件），同一 response 上再调 getWriter() 会因 getOutputStream()/getWriter() 二选一的 Servlet 规范冲突
+    // 而抛异常，异常发生时 status/header 已经提交但 body 从未写出。直接写 outputStream 并立即 flush，
+    // 避免这一整类 writer 相关的时序问题。
+    private fun writeJsonError(response: HttpServletResponse, status: Int, body: String) {
+        response.status = status
         response.contentType = "application/json"
         response.characterEncoding = "UTF-8"
-        response.writer.write("""{"success":false,"code":"20004","message":"$message"}""")
-        return false
+        val bytes = body.toByteArray(Charsets.UTF_8)
+        response.setContentLength(bytes.size)
+        response.outputStream.write(bytes)
+        response.outputStream.flush()
     }
 }
