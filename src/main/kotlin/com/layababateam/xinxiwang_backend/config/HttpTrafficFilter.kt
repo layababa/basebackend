@@ -35,6 +35,10 @@ class HttpTrafficFilter(private val metrics: BusinessMetrics) : OncePerRequestFi
         val wrapped = CountingResponseWrapper(response)
         try {
             filterChain.doFilter(request, wrapped)
+            // 正常完成时主动 drain 包装器里的 OutputStreamWriter 字符缓冲，避免无换行结尾的
+            // 响应体（拦截器返回的 401/403 JSON 等）滞留丢失。异常路径不 drain：留给容器/上层
+            // 错误处理，避免过早提交响应。详见 CountingResponseWrapper.flushInternalWriter 注释。
+            wrapped.flushInternalWriter()
         } finally {
             metrics.recordHttpBytes("out", group, wrapped.bytesWritten())
         }
@@ -79,6 +83,25 @@ class CountingResponseWrapper(private val delegate: HttpServletResponse) :
         val w = PrintWriter(OutputStreamWriter(wrap, charset), true)
         writer = w
         return w
+    }
+
+    /**
+     * 把中间 OutputStreamWriter 的字符编码缓冲刷到底层字节流。
+     *
+     * 根因：getWriter() 返回的是 PrintWriter(OutputStreamWriter(...))，OutputStreamWriter 自带一层
+     * char→byte 编码缓冲。PrintWriter 的 autoFlush=true 只在 println/换行时触发，对
+     * response.writer.write("{...无换行的 JSON...}") 这类写法不会 flush。响应结束时容器只会 flush
+     * 底层响应缓冲，碰不到我们插进去的这层 OutputStreamWriter → 字节滞留、丢失，客户端收到
+     * content-length: 0 的空 body（典型症状：拦截器返回的 401/403 JSON 变空）。
+     * 同时 written 计数在 flush 前也是偏少的（字符还没编码进 CountingServletOutputStream）。
+     */
+    fun flushInternalWriter() {
+        writer?.flush()
+    }
+
+    override fun flushBuffer() {
+        writer?.flush()
+        super.flushBuffer()
     }
 }
 
