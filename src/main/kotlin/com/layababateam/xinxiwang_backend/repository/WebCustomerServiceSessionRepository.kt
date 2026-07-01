@@ -18,4 +18,8 @@ interface WebCustomerServiceSessionRepository : MongoRepository<WebCustomerServi
         externalAnonymousId: String,
         status: WebCustomerServiceSessionStatus,
     ): WebCustomerServiceSession?
+
+    fun findByExternalApiCredentialIdOrderByLastMessageAtDesc(
+        externalApiCredentialId: String,
+    ): List<WebCustomerServiceSession>
 }

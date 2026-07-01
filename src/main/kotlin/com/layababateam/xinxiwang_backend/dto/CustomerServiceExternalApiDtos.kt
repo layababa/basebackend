@@ -17,6 +17,7 @@ data class CustomerServiceExternalApiCredentialResponse(
     val id: String,
     val name: String,
     val apiKey: String,
+    val projectId: String = apiKey,
     val qrCodeId: String,
     val enabled: Boolean,
     val createdBy: String?,
@@ -27,6 +28,7 @@ data class CustomerServiceExternalApiCredentialResponse(
 data class CustomerServiceExternalApiCredentialSecretResponse(
     val credential: CustomerServiceExternalApiCredentialResponse,
     val apiSecret: String,
+    val apiToken: String = apiSecret,
 )
 
 data class ExternalCustomerServiceApiResponse<T>(
