@@ -57,6 +57,7 @@ class CustomerServiceExternalApiService(
             visitorName = body.visitorName,
             sourceUrl = body.sourceUrl,
             content = body.content,
+            customerServiceQrCodeId = credential.qrCodeId,
         )
         val session = sessionById(message.sessionId)
         return ExternalCustomerServiceSessionResult(
@@ -82,6 +83,7 @@ class CustomerServiceExternalApiService(
             visitorName = session.visitorName,
             sourceUrl = session.sourceUrl,
             content = body.content,
+            customerServiceQrCodeId = credential.qrCodeId,
         )
         val updated = sessionById(message.sessionId)
         return ExternalCustomerServiceSessionResult(

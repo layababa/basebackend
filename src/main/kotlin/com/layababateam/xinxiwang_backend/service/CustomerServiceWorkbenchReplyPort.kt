@@ -13,6 +13,17 @@ data class CustomerServiceWorkbenchReplyResult(
     val conversationId: String? = null,
 )
 
+data class CustomerServiceWorkbenchVisitorMessageCommand(
+    val customerUserId: String,
+    val customerServiceUserId: String,
+    val contentType: Int,
+    val content: String,
+    val imageUrl: String? = null,
+)
+
 interface CustomerServiceWorkbenchReplyPort {
     fun sendCustomerServiceReply(command: CustomerServiceWorkbenchReplyCommand): CustomerServiceWorkbenchReplyResult
+
+    fun sendCustomerVisitorMessage(command: CustomerServiceWorkbenchVisitorMessageCommand): CustomerServiceWorkbenchReplyResult =
+        CustomerServiceWorkbenchReplyResult()
 }
