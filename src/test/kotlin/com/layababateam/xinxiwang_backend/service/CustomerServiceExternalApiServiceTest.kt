@@ -24,6 +24,8 @@ import java.lang.reflect.Proxy
 import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 
 class CustomerServiceExternalApiServiceTest {
     @Test
@@ -85,6 +87,66 @@ class CustomerServiceExternalApiServiceTest {
         assertEquals("credential-1", state.sessions[created.session.id]?.externalApiCredentialId)
         assertEquals("visitor-1", state.sessions[created.session.id]?.externalAnonymousId)
     }
+
+    @Test
+    fun `external api creates temporary assigned user for anonymous visitor`() {
+        val state = ExternalApiState(
+            users = linkedMapOf(
+                "cs-1" to externalUser("cs-1", "cs01", "Support", isOperator = true),
+            ),
+            accounts = linkedMapOf(
+                "account-1" to CustomerServiceAccount(id = "account-1", userId = "cs-1", displayName = "Support"),
+            ),
+            qrs = linkedMapOf(
+                "qr-1" to CustomerServiceQrCode(id = "qr-1", name = "API", code = "api-code", enabled = true),
+            ),
+            bindings = linkedMapOf(
+                "binding-1" to CustomerServiceQrBinding(
+                    id = "binding-1",
+                    qrCodeId = "qr-1",
+                    customerServiceId = "account-1",
+                    enabled = true,
+                ),
+            ),
+        )
+        val credential = CustomerServiceExternalApiCredential(
+            id = "credential-1",
+            name = "Partner API",
+            apiKey = "key-1",
+            apiSecret = "secret-1",
+            qrCodeId = "qr-1",
+            enabled = true,
+            createdBy = "admin-1",
+        )
+
+        val created = state.externalService().createSession(
+            credential = credential,
+            body = ExternalCustomerServiceCreateSessionRequest(
+                anonymousId = "visitor-1",
+                visitorName = "Guest",
+                content = "hello",
+                sourceUrl = "https://partner.example/help",
+            ),
+        )
+
+        val temporaryUser = state.users.values.singleOrNull { it.id != "cs-1" }
+        assertNotNull(temporaryUser)
+        assertEquals("Guest", temporaryUser.displayName)
+        assertEquals("cs-1", temporaryUser.assignedCsUserId)
+        assertEquals("qr-1", temporaryUser.assignedCsQrCodeId)
+        assertNotEquals("external:credential-1:visitor-1", temporaryUser.id)
+        assertEquals(temporaryUser.id, state.sessions[created.session.id]?.visitorId)
+        assertEquals(temporaryUser.id, state.messages[created.message.id]?.senderId)
+        assertEquals(
+            CustomerServiceWorkbenchVisitorMessageCommand(
+                customerUserId = temporaryUser.id.orEmpty(),
+                customerServiceUserId = "cs-1",
+                contentType = 0,
+                content = "hello",
+            ),
+            state.relayedVisitorMessages.singleOrNull(),
+        )
+    }
 }
 
 private data class ExternalApiState(
@@ -96,6 +158,8 @@ private data class ExternalApiState(
     val sessions: MutableMap<String, WebCustomerServiceSession> = linkedMapOf(),
     val messages: MutableMap<String, WebCustomerServiceMessage> = linkedMapOf(),
 ) {
+    val relayedVisitorMessages = mutableListOf<CustomerServiceWorkbenchVisitorMessageCommand>()
+
     fun externalService() = CustomerServiceExternalApiService(
         accountRepository = accountRepository(),
         qrCodeRepository = qrRepository(),
@@ -106,21 +170,45 @@ private data class ExternalApiState(
         workbenchService = workbenchService(),
     )
 
-    fun workbenchService() = CustomerServiceWorkbenchService(
-        accountRepository = accountRepository(),
-        userRepository = userRepository(),
-        entryRepository = entryRepository(),
-        sessionRepository = sessionRepository(),
-        messageRepository = messageRepository(),
-        webCustomerServiceService = WebCustomerServiceService(
+    fun workbenchService(): CustomerServiceWorkbenchService {
+        val service = CustomerServiceWorkbenchService(
+            accountRepository = accountRepository(),
+            userRepository = userRepository(),
             entryRepository = entryRepository(),
             sessionRepository = sessionRepository(),
             messageRepository = messageRepository(),
-            tokenService = WebCustomerServiceTokenService(),
-            uploadPort = externalUnsupportedProxy(UploadPort::class.java),
-            mongoTemplate = unusedMongoTemplate(),
-        ),
-    )
+            webCustomerServiceService = WebCustomerServiceService(
+                entryRepository = entryRepository(),
+                sessionRepository = sessionRepository(),
+                messageRepository = messageRepository(),
+                tokenService = WebCustomerServiceTokenService(),
+                uploadPort = externalUnsupportedProxy(UploadPort::class.java),
+                mongoTemplate = unusedMongoTemplate(),
+            ),
+        )
+        CustomerServiceWorkbenchService::class.java
+            .getDeclaredField("replyPort")
+            .apply { isAccessible = true }
+            .set(
+                service,
+                object : CustomerServiceWorkbenchReplyPort {
+                    override fun sendCustomerServiceReply(
+                        command: CustomerServiceWorkbenchReplyCommand,
+                    ): CustomerServiceWorkbenchReplyResult = CustomerServiceWorkbenchReplyResult()
+
+                    override fun sendCustomerVisitorMessage(
+                        command: CustomerServiceWorkbenchVisitorMessageCommand,
+                    ): CustomerServiceWorkbenchReplyResult {
+                        relayedVisitorMessages += command
+                        return CustomerServiceWorkbenchReplyResult(
+                            messageId = "visitor-im-${relayedVisitorMessages.size}",
+                            conversationId = "conversation-${command.customerUserId}-${command.customerServiceUserId}",
+                        )
+                    }
+                },
+            )
+        return service
+    }
 
     private fun accountRepository(): CustomerServiceAccountRepository =
         externalProxy(CustomerServiceAccountRepository::class.java) { method, args ->
@@ -162,9 +250,18 @@ private data class ExternalApiState(
             when (method.name) {
                 "findById" -> Optional.ofNullable(users[args?.firstOrNull() as String])
                 "findByIdAndIsDeletedFalse" -> users[args?.firstOrNull() as String]?.takeUnless { it.isDeleted }
+                "findByUsername" -> users.values.firstOrNull { it.username == args?.firstOrNull() as String }
                 "findAllById" -> {
                     val ids = (args?.firstOrNull() as Iterable<*>).map { it.toString() }.toSet()
                     users.values.filter { it.id in ids }
+                }
+                "existsByUsername" -> users.values.any { it.username == args?.firstOrNull() as String }
+                "findByMyInviteCode" -> users.values.firstOrNull { it.myInviteCode == args?.firstOrNull() as String }
+                "save" -> {
+                    val user = args?.firstOrNull() as User
+                    val saved = if (user.id == null) user.copy(id = "user-${users.size + 1}") else user
+                    users[saved.id.orEmpty()] = saved
+                    saved
                 }
                 else -> externalDefaultValue(method.returnType)
             }

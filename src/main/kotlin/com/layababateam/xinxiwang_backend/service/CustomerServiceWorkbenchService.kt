@@ -28,6 +28,7 @@ import com.layababateam.xinxiwang_backend.repository.WebCustomerServiceSessionRe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import java.security.MessageDigest
 import kotlin.jvm.optionals.getOrNull
 
 @Service
@@ -149,6 +150,7 @@ class CustomerServiceWorkbenchService(
         visitorName: String?,
         sourceUrl: String?,
         content: String,
+        customerServiceQrCodeId: String? = null,
     ): WebCustomerServiceMessage {
         val context = ensureCustomerServiceContext(customerServiceUserId)
         val body = content.trim()
@@ -159,6 +161,14 @@ class CustomerServiceWorkbenchService(
         val credentialId = externalApiCredentialId.trim()
         val anonymousId = externalAnonymousId.trim()
         val resolvedVisitorName = WebCustomerServiceRules.trimToNull(visitorName) ?: "Anonymous"
+        val temporaryUser = ensureExternalTemporaryUser(
+            credentialId = credentialId,
+            anonymousId = anonymousId,
+            customerServiceUserId = customerServiceUserId,
+            customerServiceQrCodeId = customerServiceQrCodeId,
+            visitorName = resolvedVisitorName,
+        )
+        val visitorUserId = temporaryUser.id.orEmpty()
         val session = sessionRepository
             .findFirstByExternalApiCredentialIdAndExternalAnonymousIdAndStatusNotOrderByLastMessageAtDesc(
                 externalApiCredentialId = credentialId,
@@ -166,6 +176,7 @@ class CustomerServiceWorkbenchService(
                 status = WebCustomerServiceSessionStatus.CLOSED,
             )?.let { existing ->
                 existing.copy(
+                    visitorId = visitorUserId,
                     status = WebCustomerServiceSessionStatus.ACTIVE,
                     assignedAdminId = customerServiceUserId,
                     assignedAdminUsername = context.displayName,
@@ -175,7 +186,7 @@ class CustomerServiceWorkbenchService(
                 )
             } ?: WebCustomerServiceSession(
                 entryId = context.entry.id.orEmpty(),
-                visitorId = externalVisitorId(credentialId, anonymousId),
+                visitorId = visitorUserId,
                 visitorName = resolvedVisitorName,
                 status = WebCustomerServiceSessionStatus.ACTIVE,
                 assignedAdminId = customerServiceUserId,
@@ -188,15 +199,22 @@ class CustomerServiceWorkbenchService(
                 updatedAt = now,
             )
         val savedSession = sessionRepository.save(session)
-        return saveMessage(
+        val savedMessage = saveMessage(
             session = savedSession,
             senderType = WebCustomerServiceSenderType.VISITOR,
-            senderId = externalVisitorId(credentialId, anonymousId),
+            senderId = visitorUserId,
             senderName = resolvedVisitorName,
             contentType = WebCustomerServiceContentType.TEXT,
             content = body,
             imageUrl = null,
         )
+        relayVisitorToIm(
+            session = savedSession,
+            customerServiceUserId = customerServiceUserId,
+            contentType = ContentType.TEXT.value,
+            content = body,
+        )
+        return savedMessage
     }
 
     fun recordAssignedCustomerMessage(
@@ -238,6 +256,51 @@ class CustomerServiceWorkbenchService(
             senderType = WebCustomerServiceSenderType.VISITOR,
             senderId = customerUserId,
             senderName = customer.displayName,
+            contentType = workbenchContentType,
+            content = workbenchContent(contentType, content),
+            imageUrl = if (workbenchContentType == WebCustomerServiceContentType.IMAGE) imageUrlFromContent(content) else null,
+        )
+    }
+
+    fun recordCustomerServiceImReply(
+        customerServiceUserId: String,
+        customerUserId: String,
+        contentType: Int,
+        content: String,
+    ): WebCustomerServiceMessage? {
+        val customer = userRepository.findByIdAndIsDeletedFalse(customerUserId) ?: return null
+        if (customer.isOperator || customer.assignedCsUserId != customerServiceUserId) return null
+        val context = runCatching { ensureCustomerServiceContext(customerServiceUserId) }.getOrNull() ?: return null
+        val now = System.currentTimeMillis()
+        val session = sessionRepository.findFirstByEntryIdAndVisitorIdAndStatusNotOrderByLastMessageAtDesc(
+            entryId = context.entry.id.orEmpty(),
+            visitorId = customerUserId,
+            status = WebCustomerServiceSessionStatus.CLOSED,
+        )?.copy(
+            status = WebCustomerServiceSessionStatus.ACTIVE,
+            assignedAdminId = customerServiceUserId,
+            assignedAdminUsername = context.displayName,
+            visitorName = customer.displayName,
+            updatedAt = now,
+        ) ?: WebCustomerServiceSession(
+            entryId = context.entry.id.orEmpty(),
+            visitorId = customerUserId,
+            visitorName = customer.displayName,
+            status = WebCustomerServiceSessionStatus.ACTIVE,
+            assignedAdminId = customerServiceUserId,
+            assignedAdminUsername = context.displayName,
+            sourceUrl = "app://customer-service/$customerServiceUserId",
+            createdAt = now,
+            lastMessageAt = now,
+            updatedAt = now,
+        )
+        val savedSession = sessionRepository.save(session)
+        val workbenchContentType = workbenchContentType(contentType)
+        return saveMessage(
+            session = savedSession,
+            senderType = WebCustomerServiceSenderType.ADMIN,
+            senderId = customerServiceUserId,
+            senderName = context.displayName,
             contentType = workbenchContentType,
             content = workbenchContent(contentType, content),
             imageUrl = if (workbenchContentType == WebCustomerServiceContentType.IMAGE) imageUrlFromContent(content) else null,
@@ -388,16 +451,92 @@ class CustomerServiceWorkbenchService(
         content: String,
         imageUrl: String? = null,
     ) {
-        if (!session.externalApiCredentialId.isNullOrBlank()) {
-            return
-        }
+        val relaySession = ensureExternalSessionVisitorUser(session)
         requireReplyPort().sendCustomerServiceReply(
             CustomerServiceWorkbenchReplyCommand(
                 customerServiceUserId = customerServiceUserId,
-                customerUserId = session.visitorId,
+                customerUserId = relaySession.visitorId,
                 contentType = contentType,
                 content = content,
                 imageUrl = imageUrl,
+            ),
+        )
+    }
+
+    private fun relayVisitorToIm(
+        session: WebCustomerServiceSession,
+        customerServiceUserId: String,
+        contentType: Int,
+        content: String,
+        imageUrl: String? = null,
+    ) {
+        requireReplyPort().sendCustomerVisitorMessage(
+            CustomerServiceWorkbenchVisitorMessageCommand(
+                customerUserId = session.visitorId,
+                customerServiceUserId = customerServiceUserId,
+                contentType = contentType,
+                content = content,
+                imageUrl = imageUrl,
+            ),
+        )
+    }
+
+    private fun ensureExternalSessionVisitorUser(session: WebCustomerServiceSession): WebCustomerServiceSession {
+        val credentialId = session.externalApiCredentialId?.trim().orEmpty()
+        val anonymousId = session.externalAnonymousId?.trim().orEmpty()
+        if (credentialId.isBlank() || anonymousId.isBlank()) return session
+        val assignedAdminId = session.assignedAdminId?.takeIf { it.isNotBlank() } ?: return session
+        val currentVisitor = userRepository.findByIdAndIsDeletedFalse(session.visitorId)
+        if (currentVisitor != null && currentVisitor.assignedCsUserId == assignedAdminId) return session
+        val temporaryUser = ensureExternalTemporaryUser(
+            credentialId = credentialId,
+            anonymousId = anonymousId,
+            customerServiceUserId = assignedAdminId,
+            customerServiceQrCodeId = null,
+            visitorName = session.visitorName,
+        )
+        val visitorUserId = temporaryUser.id.orEmpty()
+        if (visitorUserId.isBlank() || visitorUserId == session.visitorId) return session
+        return sessionRepository.save(session.copy(visitorId = visitorUserId, updatedAt = System.currentTimeMillis()))
+    }
+
+    private fun ensureExternalTemporaryUser(
+        credentialId: String,
+        anonymousId: String,
+        customerServiceUserId: String,
+        customerServiceQrCodeId: String?,
+        visitorName: String?,
+    ): User {
+        val username = externalTemporaryUsername(credentialId, anonymousId)
+        val displayName = WebCustomerServiceRules.trimToNull(visitorName) ?: "Anonymous"
+        val existing = userRepository.findByUsername(username)
+        if (existing != null) {
+            val updated = existing.copy(
+                displayName = displayName,
+                assignedCsUserId = customerServiceUserId,
+                assignedCsQrCodeId = WebCustomerServiceRules.trimToNull(customerServiceQrCodeId) ?: existing.assignedCsQrCodeId,
+                isDeleted = false,
+                deletedAt = null,
+                deletedReason = null,
+                updatedAt = System.currentTimeMillis(),
+            )
+            return if (updated == existing) existing else userRepository.save(updated)
+        }
+
+        val now = System.currentTimeMillis()
+        return userRepository.save(
+            User(
+                username = username,
+                displayName = displayName,
+                avatarUrl = "",
+                gender = 2,
+                bio = "",
+                passwordHash = EXTERNAL_TEMP_PASSWORD_HASH,
+                inviteCode = "",
+                myInviteCode = externalTemporaryInviteCode(credentialId, anonymousId),
+                assignedCsUserId = customerServiceUserId,
+                assignedCsQrCodeId = WebCustomerServiceRules.trimToNull(customerServiceQrCodeId),
+                updatedAt = now,
             ),
         )
     }
@@ -447,6 +586,7 @@ class CustomerServiceWorkbenchService(
         private const val CUSTOMER_SERVICE_ROLE = "CUSTOMER_SERVICE"
         private const val TEXT_MESSAGE_MAX_LENGTH = 5000
         private const val IMAGE_MESSAGE_CONTENT = "[图片]"
+        private const val EXTERNAL_TEMP_PASSWORD_HASH = "external-temporary-account"
         private val IMAGE_URL_PATTERN = Regex(""""(?:url|imageUrl)"\s*:\s*"([^"]+)"""")
 
         fun appEntryId(customerServiceUserId: String): String =
@@ -454,5 +594,16 @@ class CustomerServiceWorkbenchService(
 
         fun externalVisitorId(externalApiCredentialId: String, externalAnonymousId: String): String =
             "external:$externalApiCredentialId:$externalAnonymousId"
+
+        fun externalTemporaryUsername(externalApiCredentialId: String, externalAnonymousId: String): String =
+            "cs_tmp_${sha256Hex("$externalApiCredentialId:$externalAnonymousId").take(24)}"
+
+        fun externalTemporaryInviteCode(externalApiCredentialId: String, externalAnonymousId: String): String =
+            "CST${sha256Hex("invite:$externalApiCredentialId:$externalAnonymousId").take(13).uppercase()}"
+
+        private fun sha256Hex(value: String): String =
+            MessageDigest.getInstance("SHA-256")
+                .digest(value.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
     }
 }

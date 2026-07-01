@@ -114,10 +114,18 @@ class CustomerServiceWorkbenchServiceTest {
     }
 
     @Test
-    fun `customer service reply to external api session stays in workbench without im relay`() {
+    fun `customer service reply to external api session is relayed to normal im chat`() {
         val entryId = CustomerServiceWorkbenchService.appEntryId("cs-1")
         val state = WorkbenchState(
-            users = linkedMapOf("cs-1" to user("cs-1", "cs01", "CS One", isOperator = true)),
+            users = linkedMapOf(
+                "cs-1" to user("cs-1", "cs01", "CS One", isOperator = true),
+                "tmp-visitor-1" to user(
+                    "tmp-visitor-1",
+                    "tmp_visitor_1",
+                    "Guest",
+                    assignedCsUserId = "cs-1",
+                ),
+            ),
             accounts = linkedMapOf("account-1" to account("account-1", "cs-1")),
             entries = linkedMapOf(
                 entryId to appEntry(
@@ -131,6 +139,7 @@ class CustomerServiceWorkbenchServiceTest {
                 "session-1" to externalApiSession(
                     id = "session-1",
                     entryId = entryId,
+                    visitorId = "tmp-visitor-1",
                     externalAnonymousId = "visitor-1",
                     assignedAdminId = "cs-1",
                 ),
@@ -148,6 +157,63 @@ class CustomerServiceWorkbenchServiceTest {
         assertEquals("reply from support", reply.content)
         assertEquals(1, state.messages.size)
         assertEquals("reply from support", state.sessions["session-1"]?.lastMessagePreview)
+        assertEquals(
+            CustomerServiceWorkbenchReplyCommand(
+                customerServiceUserId = "cs-1",
+                customerUserId = "tmp-visitor-1",
+                contentType = 0,
+                content = "reply from support",
+            ),
+            state.relayedReplies.singleOrNull(),
+        )
+    }
+
+    @Test
+    fun `customer service normal im reply to temporary visitor is recorded in web session`() {
+        val entryId = CustomerServiceWorkbenchService.appEntryId("cs-1")
+        val state = WorkbenchState(
+            users = linkedMapOf(
+                "cs-1" to user("cs-1", "cs01", "CS One", isOperator = true),
+                "tmp-visitor-1" to user(
+                    "tmp-visitor-1",
+                    "tmp_visitor_1",
+                    "Guest",
+                    assignedCsUserId = "cs-1",
+                ),
+            ),
+            accounts = linkedMapOf("account-1" to account("account-1", "cs-1")),
+            entries = linkedMapOf(
+                entryId to appEntry(
+                    id = entryId,
+                    name = "Support workbench",
+                    seatAdminIds = listOf("cs-1"),
+                    updatedAt = 200L,
+                ),
+            ),
+            sessions = linkedMapOf(
+                "session-1" to externalApiSession(
+                    id = "session-1",
+                    entryId = entryId,
+                    externalAnonymousId = "visitor-1",
+                    assignedAdminId = "cs-1",
+                    visitorId = "tmp-visitor-1",
+                ),
+            ),
+        )
+
+        val recorded = state.service().recordCustomerServiceImReply(
+            customerServiceUserId = "cs-1",
+            customerUserId = "tmp-visitor-1",
+            contentType = 0,
+            content = "app reply",
+        )
+
+        assertNotNull(recorded)
+        assertEquals(WebCustomerServiceSenderType.ADMIN, recorded.senderType)
+        assertEquals("cs-1", recorded.senderId)
+        assertEquals("app reply", recorded.content)
+        assertEquals("app reply", state.sessions["session-1"]?.lastMessagePreview)
+        assertEquals(emptyList(), state.relayedReplies)
     }
 }
 
@@ -159,22 +225,43 @@ private data class WorkbenchState(
     val messages: MutableMap<String, WebCustomerServiceMessage> = linkedMapOf(),
 ) {
     var entrySaveCount = 0
+    val relayedReplies = mutableListOf<CustomerServiceWorkbenchReplyCommand>()
 
-    fun service() = CustomerServiceWorkbenchService(
-        accountRepository = accountRepository(),
-        userRepository = userRepository(),
-        entryRepository = entryRepository(),
-        sessionRepository = sessionRepository(),
-        messageRepository = messageRepository(),
-        webCustomerServiceService = WebCustomerServiceService(
+    fun service(): CustomerServiceWorkbenchService {
+        val service = CustomerServiceWorkbenchService(
+            accountRepository = accountRepository(),
+            userRepository = userRepository(),
             entryRepository = entryRepository(),
             sessionRepository = sessionRepository(),
             messageRepository = messageRepository(),
-            tokenService = WebCustomerServiceTokenService(),
-            uploadPort = unsupportedWorkbenchProxy(UploadPort::class.java),
-            mongoTemplate = unusedMongoTemplate(),
-        ),
-    )
+            webCustomerServiceService = WebCustomerServiceService(
+                entryRepository = entryRepository(),
+                sessionRepository = sessionRepository(),
+                messageRepository = messageRepository(),
+                tokenService = WebCustomerServiceTokenService(),
+                uploadPort = unsupportedWorkbenchProxy(UploadPort::class.java),
+                mongoTemplate = unusedMongoTemplate(),
+            ),
+        )
+        CustomerServiceWorkbenchService::class.java
+            .getDeclaredField("replyPort")
+            .apply { isAccessible = true }
+            .set(
+                service,
+                object : CustomerServiceWorkbenchReplyPort {
+                    override fun sendCustomerServiceReply(
+                        command: CustomerServiceWorkbenchReplyCommand,
+                    ): CustomerServiceWorkbenchReplyResult {
+                        relayedReplies += command
+                        return CustomerServiceWorkbenchReplyResult(
+                            messageId = "im-${relayedReplies.size}",
+                            conversationId = "conversation-${command.customerUserId}-${command.customerServiceUserId}",
+                        )
+                    }
+                },
+            )
+        return service
+    }
 
     private fun accountRepository(): CustomerServiceAccountRepository =
         proxy(CustomerServiceAccountRepository::class.java) { method, args ->
@@ -309,10 +396,11 @@ private fun externalApiSession(
     entryId: String,
     externalAnonymousId: String,
     assignedAdminId: String,
+    visitorId: String = "external:credential-1:$externalAnonymousId",
 ) = WebCustomerServiceSession(
     id = id,
     entryId = entryId,
-    visitorId = "external:credential-1:$externalAnonymousId",
+    visitorId = visitorId,
     visitorName = "Anonymous",
     status = WebCustomerServiceSessionStatus.ACTIVE,
     assignedAdminId = assignedAdminId,

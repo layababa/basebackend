@@ -144,6 +144,9 @@ private data class SalesmartlyExternalApiState(
     val sessions: MutableMap<String, WebCustomerServiceSession> = linkedMapOf(),
     val messages: MutableMap<String, WebCustomerServiceMessage> = linkedMapOf(),
 ) {
+    val relayedReplies = mutableListOf<CustomerServiceWorkbenchReplyCommand>()
+    val relayedVisitorMessages = mutableListOf<CustomerServiceWorkbenchVisitorMessageCommand>()
+
     fun salesmartlyService() = SalesmartlyExternalApiService(
         credentialRepository = credentialRepository(),
         accountRepository = accountRepository(),
@@ -157,21 +160,51 @@ private data class SalesmartlyExternalApiState(
         signature = SalesmartlyExternalApiSignature(),
     )
 
-    fun workbenchService() = CustomerServiceWorkbenchService(
-        accountRepository = accountRepository(),
-        userRepository = userRepository(),
-        entryRepository = entryRepository(),
-        sessionRepository = sessionRepository(),
-        messageRepository = messageRepository(),
-        webCustomerServiceService = WebCustomerServiceService(
+    fun workbenchService(): CustomerServiceWorkbenchService {
+        val service = CustomerServiceWorkbenchService(
+            accountRepository = accountRepository(),
+            userRepository = userRepository(),
             entryRepository = entryRepository(),
             sessionRepository = sessionRepository(),
             messageRepository = messageRepository(),
-            tokenService = WebCustomerServiceTokenService(),
-            uploadPort = salesmartlyProxy(UploadPort::class.java) { method, _ -> salesmartlyDefaultValue(method.returnType) },
-            mongoTemplate = unusedMongoTemplate(),
-        ),
-    )
+            webCustomerServiceService = WebCustomerServiceService(
+                entryRepository = entryRepository(),
+                sessionRepository = sessionRepository(),
+                messageRepository = messageRepository(),
+                tokenService = WebCustomerServiceTokenService(),
+                uploadPort = salesmartlyProxy(UploadPort::class.java) { method, _ -> salesmartlyDefaultValue(method.returnType) },
+                mongoTemplate = unusedMongoTemplate(),
+            ),
+        )
+        CustomerServiceWorkbenchService::class.java
+            .getDeclaredField("replyPort")
+            .apply { isAccessible = true }
+            .set(
+                service,
+                object : CustomerServiceWorkbenchReplyPort {
+                    override fun sendCustomerServiceReply(
+                        command: CustomerServiceWorkbenchReplyCommand,
+                    ): CustomerServiceWorkbenchReplyResult {
+                        relayedReplies += command
+                        return CustomerServiceWorkbenchReplyResult(
+                            messageId = "im-${relayedReplies.size}",
+                            conversationId = "conversation-${command.customerUserId}-${command.customerServiceUserId}",
+                        )
+                    }
+
+                    override fun sendCustomerVisitorMessage(
+                        command: CustomerServiceWorkbenchVisitorMessageCommand,
+                    ): CustomerServiceWorkbenchReplyResult {
+                        relayedVisitorMessages += command
+                        return CustomerServiceWorkbenchReplyResult(
+                            messageId = "visitor-im-${relayedVisitorMessages.size}",
+                            conversationId = "conversation-${command.customerUserId}-${command.customerServiceUserId}",
+                        )
+                    }
+                },
+            )
+        return service
+    }
 
     fun signed(params: Map<String, Any?>): Map<String, String> =
         mapOf("external-sign" to SalesmartlyExternalApiSignature().sign("token-1", params))
@@ -230,9 +263,16 @@ private data class SalesmartlyExternalApiState(
             when (method.name) {
                 "findById" -> Optional.ofNullable(users[args?.firstOrNull() as String])
                 "findByIdAndIsDeletedFalse" -> users[args?.firstOrNull() as String]?.takeUnless { it.isDeleted }
+                "findByUsername" -> users.values.firstOrNull { it.username == args?.firstOrNull() as String }
                 "findAllById" -> {
                     val ids = (args?.firstOrNull() as Iterable<*>).map { it.toString() }.toSet()
                     users.values.filter { it.id in ids }
+                }
+                "save" -> {
+                    val user = args?.firstOrNull() as User
+                    val saved = if (user.id == null) user.copy(id = "user-${users.size + 1}") else user
+                    users[saved.id.orEmpty()] = saved
+                    saved
                 }
                 else -> salesmartlyDefaultValue(method.returnType)
             }

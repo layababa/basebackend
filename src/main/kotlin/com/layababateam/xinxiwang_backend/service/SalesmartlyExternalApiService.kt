@@ -206,6 +206,7 @@ class SalesmartlyExternalApiService(
             visitorName = name,
             sourceUrl = "salesmartly://${params["from_channel_info"]?.toString().orEmpty()}",
             content = "Conversation created.",
+            customerServiceQrCodeId = credential.qrCodeId,
         )
         messageRepository.save(
             message.copy(
